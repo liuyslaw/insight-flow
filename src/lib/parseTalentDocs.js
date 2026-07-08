@@ -33,6 +33,9 @@ export function parseTalentRecords(text) {
     const role = block.match(/ROLE:\s*(.+)/)?.[1]?.trim()
     const level = block.match(/ASSIGNED LEVEL:\s*(L?\d+)/i)?.[1]?.trim()
     const rating = block.match(/APPRAISAL RATING:\s*(\d)/)?.[1]
+    const gender = block.match(/GENDER:\s*(\w+)/i)?.[1]?.trim()
+    const age = block.match(/AGE:\s*(\d+)/i)?.[1]
+    const yearsOfService = block.match(/YEARS OF SERVICE:\s*(\d+)/i)?.[1]
 
     if (!site && !role && !level && !rating) continue
 
@@ -43,6 +46,9 @@ export function parseTalentRecords(text) {
       level: level ? (level.startsWith('L') ? level : `L${level}`) : 'Unknown',
       rating: rating ? Number(rating) : null,
       function: classifyFunction(role || ''),
+      gender: gender || null,
+      age: age ? Number(age) : null,
+      yearsOfService: yearsOfService ? Number(yearsOfService) : null,
       raw: block.trim(),
     })
   }
@@ -59,4 +65,35 @@ export function countBy(records, key) {
   return Object.entries(counts)
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => (a.name > b.name ? 1 : -1))
+}
+
+const AGE_BUCKETS = [
+  { label: 'Under 25', test: (a) => a < 25 },
+  { label: '25–34', test: (a) => a >= 25 && a <= 34 },
+  { label: '35–44', test: (a) => a >= 35 && a <= 44 },
+  { label: '45–54', test: (a) => a >= 45 && a <= 54 },
+  { label: '55+', test: (a) => a >= 55 },
+]
+
+const TENURE_BUCKETS = [
+  { label: '< 1 yr', test: (y) => y < 1 },
+  { label: '1–3 yrs', test: (y) => y >= 1 && y <= 3 },
+  { label: '4–7 yrs', test: (y) => y >= 4 && y <= 7 },
+  { label: '8–15 yrs', test: (y) => y >= 8 && y <= 15 },
+  { label: '15+ yrs', test: (y) => y > 15 },
+]
+
+export function countByBucket(records, field, buckets) {
+  return buckets.map((b) => ({
+    name: b.label,
+    value: records.filter((r) => r[field] != null && b.test(r[field])).length,
+  }))
+}
+
+export function countByAgeBucket(records) {
+  return countByBucket(records, 'age', AGE_BUCKETS)
+}
+
+export function countByTenureBucket(records) {
+  return countByBucket(records, 'yearsOfService', TENURE_BUCKETS)
 }

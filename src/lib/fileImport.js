@@ -16,6 +16,9 @@ const HEADER_MAP = {
   jd: /^(job description|jd|description|scope)$/i,
   rating: /^(rating|appraisal rating|score|performance rating)$/i,
   narrative: /^(narrative|comments|appraisal narrative|manager comments)$/i,
+  gender: /^(gender|sex)$/i,
+  age: /^(age)$/i,
+  yearsOfService: /^(years of service|tenure|service years|length of service)$/i,
 }
 
 function matchHeader(header) {
@@ -53,6 +56,9 @@ function rowsToTalentBlocks(rows) {
         lines.push(`APPRAISAL RATING: ${r} / 5 (${ratingLabel(r)})`)
       }
       if (mapped.narrative) lines.push(`APPRAISAL NARRATIVE: "${row[mapped.narrative] ?? ''}"`)
+      if (mapped.gender) lines.push(`GENDER: ${row[mapped.gender] ?? ''}`)
+      if (mapped.age) lines.push(`AGE: ${row[mapped.age] ?? ''}`)
+      if (mapped.yearsOfService) lines.push(`YEARS OF SERVICE: ${row[mapped.yearsOfService] ?? ''}`)
       return lines.join('\n')
     })
     .join('\n\n---\n\n')
