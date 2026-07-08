@@ -37,6 +37,9 @@ export function parseTalentRecords(text) {
     const gender = block.match(/GENDER:\s*(\w+)/i)?.[1]?.trim()
     const age = block.match(/AGE:\s*(\d+)/i)?.[1]
     const yearsOfService = block.match(/YEARS OF SERVICE:\s*(\d+)/i)?.[1]
+    const appraisalCycle = block.match(/APPRAISAL CYCLE:\s*(\d{4})/i)?.[1]
+    const status = block.match(/STATUS:\s*(Active|Left)/i)?.[1]
+    const exitDate = block.match(/EXIT DATE:\s*(.+)/i)?.[1]?.trim()
 
     if (!site && !role && !level && !rating) continue
 
@@ -51,6 +54,9 @@ export function parseTalentRecords(text) {
       gender: gender || null,
       age: age ? Number(age) : null,
       yearsOfService: yearsOfService ? Number(yearsOfService) : null,
+      appraisalCycle: appraisalCycle ? Number(appraisalCycle) : null,
+      status: status || 'Active',
+      exitDate: exitDate || null,
       raw: block.trim(),
     })
   }
@@ -98,4 +104,26 @@ export function countByAgeBucket(records) {
 
 export function countByTenureBucket(records) {
   return countByBucket(records, 'yearsOfService', TENURE_BUCKETS)
+}
+
+/**
+ * Attrition rate for a given cycle, defined here as:
+ *   leavers in that cycle ÷ (active + leavers in that cycle) × 100
+ * A simplified proxy suitable for a phase-1 demo — not official HR
+ * methodology (which typically uses average headcount over the period).
+ * Stated explicitly wherever this number is shown in the UI.
+ */
+export function computeAttrition(records, cycle) {
+  const inCycle = records.filter((r) => r.appraisalCycle === cycle)
+  const active = inCycle.filter((r) => r.status === 'Active')
+  const leavers = inCycle.filter((r) => r.status === 'Left')
+  const total = inCycle.length
+  return {
+    cycle,
+    headcount: total,
+    activeCount: active.length,
+    leaverCount: leavers.length,
+    leavers,
+    rate: total > 0 ? (leavers.length / total) * 100 : 0,
+  }
 }

@@ -23,7 +23,7 @@ function distTable(data) {
   })
 }
 
-export async function buildWorkforceReportDocx({ scope, recordCount, ageData, genderData, tenureData, summary }) {
+export async function buildWorkforceReportDocx({ scope, recordCount, ageData, genderData, tenureData, attritionRate, leaverCount, summary }) {
   const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
 
   const doc = new Document({
@@ -33,6 +33,11 @@ export async function buildWorkforceReportDocx({ scope, recordCount, ageData, ge
           new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: 'Workforce Insights Report' })] }),
           new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: `Prepared by InsightFlow · ${dateStr}`, color: '71717A', size: 20 })] }),
           new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: `Scope: ${scope} · ${recordCount} record(s) with demographic data`, color: '71717A', size: 20 })] }),
+
+          ...(attritionRate != null ? [
+            new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 100, after: 80 }, children: [new TextRun({ text: 'Attrition' })] }),
+            new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: `${attritionRate}% (${leaverCount} left this cycle). Defined as leavers ÷ (active + leavers) × 100 — a simplified phase-1 proxy, not official HR methodology.` })] }),
+          ] : []),
 
           new Paragraph({ heading: HeadingLevel.HEADING_1, spacing: { before: 100, after: 120 }, children: [new TextRun({ text: 'Age Distribution' })] }),
           distTable(ageData),
