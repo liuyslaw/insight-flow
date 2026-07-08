@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
-import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2 } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket } from '../lib/parseTalentDocs.js'
+import { buildWorkforceReportDocx } from '../lib/buildWorkforceReport.js'
+import { exportRowsToExcel } from '../lib/exportExcel.js'
 
 const ageColor = '#fbbf24'
 const tenureColor = '#B84480'
@@ -100,6 +102,25 @@ export default function WorkforceInsightsModule() {
     } finally { setLoadingSummary(false) }
   }
 
+  const [exportingDocx, setExportingDocx] = useState(false)
+
+  async function exportWordReport() {
+    setExportingDocx(true)
+    try {
+      await buildWorkforceReportDocx({ scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData, summary })
+    } catch (err) {
+      setSummaryError('Could not generate the Word report. Try again.')
+    } finally { setExportingDocx(false) }
+  }
+
+  function exportExcelData() {
+    const rows = withDemo.map((r) => ({
+      Employee: r.employee || '', Role: r.role, Site: r.site, 'Business Unit': r.businessUnit || '',
+      Level: r.level, Gender: r.gender || '', Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
+    }))
+    exportRowsToExcel(rows, `InsightFlow-Workforce-Data-${new Date().toISOString().slice(0, 10)}`, 'Workforce Data')
+  }
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -132,6 +153,15 @@ export default function WorkforceInsightsModule() {
           <button onClick={() => { setSiteFilter('all'); setFunctionFilter('all') }} style={{
             background: 'none', fontSize: 11.5, color: 'var(--text3)', padding: '8px 4px',
           }}>Clear filters</button>
+        )}
+        {withDemo.length > 0 && (
+          <button onClick={exportExcelData} style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto',
+            background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 7,
+            padding: '7px 12px', color: 'var(--text2)', fontSize: 11.5,
+          }}>
+            <Table2 size={12} /> Export data as Excel
+          </button>
         )}
       </div>
 
@@ -221,20 +251,31 @@ export default function WorkforceInsightsModule() {
           )}
 
           {/* AI Summary */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
             <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
               AI Summary — {filterLabel}
             </span>
-            <button onClick={generateSummary} disabled={loadingSummary} style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)',
-              borderRadius: 8, padding: '8px 16px', color: '#fbbf24', fontSize: 12, fontWeight: 500,
-              opacity: loadingSummary ? 0.5 : 1,
-            }}>
-              {loadingSummary
-                ? <><RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
-                : <><Sparkles size={12} /> {summary ? 'Regenerate summary' : 'Generate summary'}</>}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {summary && (
+                <button onClick={exportWordReport} disabled={exportingDocx} style={{
+                  display: 'flex', alignItems: 'center', gap: 6, background: 'var(--card2)',
+                  border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px',
+                  color: 'var(--text2)', fontSize: 11.5, opacity: exportingDocx ? 0.5 : 1,
+                }}>
+                  <FileDown size={12} /> {exportingDocx ? 'Preparing…' : 'Export as Word report'}
+                </button>
+              )}
+              <button onClick={generateSummary} disabled={loadingSummary} style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)',
+                borderRadius: 8, padding: '8px 16px', color: '#fbbf24', fontSize: 12, fontWeight: 500,
+                opacity: loadingSummary ? 0.5 : 1,
+              }}>
+                {loadingSummary
+                  ? <><RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
+                  : <><Sparkles size={12} /> {summary ? 'Regenerate summary' : 'Generate summary'}</>}
+              </button>
+            </div>
           </div>
 
           {summaryError && (

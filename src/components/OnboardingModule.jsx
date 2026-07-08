@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { UserPlus, Sparkles, RefreshCw, AlertTriangle, CheckSquare, Square, FileText, Printer, Plus, X } from 'lucide-react'
+import { UserPlus, Sparkles, RefreshCw, AlertTriangle, CheckSquare, Square, FileText, Printer, Plus, X, FileDown } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords } from '../lib/parseTalentDocs.js'
+import { buildOnboardingReportDocx } from '../lib/buildOnboardingReport.js'
 
 const sections = [
   { key: 'preboarding', label: 'Pre-boarding' },
@@ -78,6 +79,18 @@ export default function OnboardingModule() {
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally { setLoading(false) }
+  }
+
+  const [exportingDocx, setExportingDocx] = useState(false)
+
+  async function exportWord() {
+    if (!plans.length) return
+    setExportingDocx(true)
+    try {
+      await buildOnboardingReportDocx(plans)
+    } catch (err) {
+      setError('Could not generate the Word report. Try again.')
+    } finally { setExportingDocx(false) }
   }
 
   function toggleTask(planIdx, section, i) {
@@ -170,7 +183,14 @@ export default function OnboardingModule() {
 
       {plans.length > 0 && (
         <>
-          <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+          <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 14 }}>
+            <button onClick={exportWord} disabled={exportingDocx} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 8,
+              padding: '8px 16px', color: 'var(--text)', fontSize: 12, opacity: exportingDocx ? 0.5 : 1,
+            }}>
+              <FileDown size={13} /> {exportingDocx ? 'Preparing…' : 'Export as Word'}
+            </button>
             <button onClick={() => window.print()} style={{
               display: 'flex', alignItems: 'center', gap: 7,
               background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 8,

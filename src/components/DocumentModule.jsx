@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Upload, Trash2, RotateCcw, FileText } from 'lucide-react'
+import { Upload, Trash2, RotateCcw, FileText, Table2 } from 'lucide-react'
 import { getDocuments, addDocument, removeDocument, resetToSample } from '../data/documentStore.js'
 import { importFile, SUPPORTED_EXTENSIONS } from '../lib/fileImport.js'
+import { exportRowsToExcel } from '../lib/exportExcel.js'
 
 const typeMeta = {
   talent: { label: 'Talent data', className: 'badge-magenta' },
@@ -56,6 +57,14 @@ export default function DocumentModule({ onChange }) {
       setImporting(false)
       e.target.value = ''
     }
+  }
+
+  function exportInventory() {
+    const rows = docs.map((d) => ({
+      Title: d.title, Type: typeMeta[d.type]?.label || d.type, Source: d.source,
+      'Added At': new Date(d.addedAt).toLocaleDateString('en-GB'), 'Characters': d.body.length,
+    }))
+    exportRowsToExcel(rows, `InsightFlow-Document-Inventory-${new Date().toISOString().slice(0, 10)}`, 'Repository')
   }
 
   return (
@@ -144,12 +153,22 @@ export default function DocumentModule({ onChange }) {
         <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
           Repository — {docs.length} document{docs.length === 1 ? '' : 's'}
         </span>
-        <button
-          onClick={handleReset}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}
-        >
-          <RotateCcw size={11} /> Reset to sample set
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {docs.length > 0 && (
+            <button
+              onClick={exportInventory}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}
+            >
+              <Table2 size={11} /> Export inventory as Excel
+            </button>
+          )}
+          <button
+            onClick={handleReset}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', fontSize: 11, color: 'var(--text3)', fontWeight: 500 }}
+          >
+            <RotateCcw size={11} /> Reset to sample set
+          </button>
+        </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {docs.map((doc) => (

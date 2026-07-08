@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, TrendingUp } from 'lucide-react'
+import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, TrendingUp, Table2 } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords, countBy } from '../lib/parseTalentDocs.js'
 import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
+import { exportRowsToExcel } from '../lib/exportExcel.js'
 import TalentCharts from './TalentCharts.jsx'
 
 const severityColor = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--text3)' }
@@ -77,6 +78,15 @@ export default function TalentManagementModule() {
     } finally { setExporting(false) }
   }
 
+  function exportExcel() {
+    const rows = records.map((r) => ({
+      Employee: r.employee || '', Role: r.role, 'Business Unit': r.businessUnit || '', Site: r.site,
+      Level: r.level, Function: r.function, Rating: r.rating ?? '',
+      Gender: r.gender || '', Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
+    }))
+    exportRowsToExcel(rows, `InsightFlow-Talent-Data-${new Date().toISOString().slice(0, 10)}`, 'Talent Data')
+  }
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
@@ -104,7 +114,7 @@ export default function TalentManagementModule() {
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} style={{
           background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
           padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
@@ -123,6 +133,15 @@ export default function TalentManagementModule() {
           <button onClick={() => { setSiteFilter('all'); setFunctionFilter('all') }} style={{
             background: 'none', fontSize: 11.5, color: 'var(--text3)', padding: '8px 4px',
           }}>Clear filters</button>
+        )}
+        {records.length > 0 && (
+          <button onClick={exportExcel} style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto',
+            background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 7,
+            padding: '7px 12px', color: 'var(--text2)', fontSize: 11.5,
+          }}>
+            <Table2 size={12} /> Export data as Excel
+          </button>
         )}
       </div>
 

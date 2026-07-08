@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Headset, Send, FileText } from 'lucide-react'
+import { Headset, Send, FileText, FileDown } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
+import { buildChatTranscriptDocx } from '../lib/buildChatTranscript.js'
 
 const starterQuestions = [
   'How many days of annual leave do I get?',
@@ -39,6 +40,17 @@ export default function AdminServicesModule() {
     } finally { setLoading(false) }
   }
 
+  const [exportingDocx, setExportingDocx] = useState(false)
+
+  async function exportTranscript() {
+    const hasExchange = messages.some((m) => m.role === 'user')
+    if (!hasExchange) return
+    setExportingDocx(true)
+    try {
+      await buildChatTranscriptDocx(messages)
+    } finally { setExportingDocx(false) }
+  }
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 960 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -57,13 +69,23 @@ export default function AdminServicesModule() {
           borderRadius: 10, display: 'flex', flexDirection: 'column', height: 480, overflow: 'hidden',
         }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '10px 16px',
             borderBottom: '1px solid var(--border)', background: 'rgba(59,130,246,0.06)',
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--blue)' }} />
-            <span style={{ fontSize: 10, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-              Live Q&amp;A
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--blue)' }} />
+              <span style={{ fontSize: 10, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+                Live Q&amp;A
+              </span>
+            </div>
+            {messages.some((m) => m.role === 'user') && (
+              <button onClick={exportTranscript} disabled={exportingDocx} style={{
+                display: 'flex', alignItems: 'center', gap: 5, background: 'none',
+                color: 'var(--text3)', fontSize: 10.5, opacity: exportingDocx ? 0.5 : 1,
+              }}>
+                <FileDown size={11} /> {exportingDocx ? 'Preparing…' : 'Export transcript'}
+              </button>
+            )}
           </div>
           <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((m, i) => (
