@@ -102,7 +102,7 @@ export default function DocumentModule({ onChange }) {
             </select>
           </div>
           <p style={{ fontSize: 10.5, color: 'var(--text3)', marginBottom: 10, lineHeight: 1.5 }}>
-            Excel imports tagged "Talent data" auto-detect columns like Site, Role, Level, and Rating. Word files import as plain text.
+            Excel imports tagged "Talent data" auto-detect columns like Site, Role, Level, Rating, Gender, Age, and Years of Service. Word files import as plain text.
           </p>
           <textarea
             value={body}
