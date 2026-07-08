@@ -4,23 +4,16 @@ import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords, countBy } from '../lib/parseTalentDocs.js'
 import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
-import TalentCharts from './TalentCharts.jsx'
+import AppraisalChart from './AppraisalChart.jsx'
 
 const severityColor = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--text3)' }
-const severityBg = {
-  high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06)', low: 'rgba(255,255,255,0.03)',
-}
-const severityBorder = {
-  high: 'rgba(239,68,68,0.25)', medium: 'rgba(245,158,11,0.25)', low: 'var(--border)',
-}
-const flagIcon = {
-  'Level/JD mismatch': ShieldAlert,
-  'Rating/narrative mismatch': AlertTriangle,
-  'Calibration variance': Scale,
-}
+const severityBg = { high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06)', low: 'rgba(255,255,255,0.03)' }
+const severityBorder = { high: 'rgba(239,68,68,0.25)', medium: 'rgba(245,158,11,0.25)', low: 'var(--border)' }
+const flagIcon = { 'Level/JD mismatch': ShieldAlert, 'Rating/narrative mismatch': AlertTriangle, 'Calibration variance': Scale }
 
 export default function TalentManagementModule() {
   const [talentDocs, setTalentDocs] = useState([])
+  const [cycle, setCycle] = useState(null)
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [loading, setLoading] = useState(false)
@@ -35,22 +28,36 @@ export default function TalentManagementModule() {
     [talentDocs]
   )
 
-  const siteOptions = useMemo(() => countBy(allRecords, 'site').map((c) => c.name), [allRecords])
-  const functionOptions = useMemo(() => countBy(allRecords, 'function').map((c) => c.name), [allRecords])
+  const cycles = useMemo(
+    () => [...new Set(allRecords.map((r) => r.appraisalCycle))].filter(Boolean).sort((a, b) => b - a),
+    [allRecords]
+  )
+  useEffect(() => { if (cycles.length && cycle == null) setCycle(cycles[0]) }, [cycles, cycle])
 
-  const records = useMemo(() => allRecords.filter((r) =>
+  const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
+  const cycleRecords = useMemo(
+    () => allActiveRecords.filter((r) => cycle == null || r.appraisalCycle === cycle),
+    [allActiveRecords, cycle]
+  )
+
+  const siteOptions = useMemo(() => countBy(cycleRecords, 'site').map((c) => c.name), [cycleRecords])
+  const functionOptions = useMemo(() => countBy(cycleRecords, 'function').map((c) => c.name), [cycleRecords])
+
+  const records = useMemo(() => cycleRecords.filter((r) =>
     (siteFilter === 'all' || r.site === siteFilter) &&
     (functionFilter === 'all' || r.function === functionFilter)
-  ), [allRecords, siteFilter, functionFilter])
+  ), [cycleRecords, siteFilter, functionFilter])
 
   const promotionCandidates = useMemo(
     () => records.filter((r) => r.rating >= 4).sort((a, b) => b.rating - a.rating),
     [records]
   )
 
-  const filterLabel = siteFilter === 'all' && functionFilter === 'all'
-    ? 'All records'
-    : [siteFilter !== 'all' ? siteFilter : null, functionFilter !== 'all' ? functionFilter : null].filter(Boolean).join(' · ')
+  const filterLabel = [
+    cycle ? `Cycle ${cycle}` : null,
+    siteFilter !== 'all' ? siteFilter : null,
+    functionFilter !== 'all' ? functionFilter : null,
+  ].filter(Boolean).join(' · ') || 'All records'
 
   async function analyze() {
     const combined = records.map((r) => r.raw).join('\n\n---\n\n')
@@ -81,7 +88,7 @@ export default function TalentManagementModule() {
   function exportExcel() {
     const rows = records.map((r) => ({
       Employee: r.employee || '', Role: r.role, 'Business Unit': r.businessUnit || '', Site: r.site,
-      Level: r.level, Function: r.function, Rating: r.rating ?? '',
+      Level: r.level, Function: r.function, 'Appraisal Cycle': r.appraisalCycle ?? '', Rating: r.rating ?? '',
       Gender: r.gender || '', Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
     }))
     exportRowsToExcel(rows, `InsightFlow-Talent-Data-${new Date().toISOString().slice(0, 10)}`, 'Talent Data')
@@ -96,8 +103,8 @@ export default function TalentManagementModule() {
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>Talent Management</h2>
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 480 }}>
-            Reads job level, JD, and appraisal records from Document, then flags consistency and
-            calibration issues across sites.
+            Talent development and appraisal — job level/JD consistency, rating calibration across
+            sites, and promotion readiness, for a selected appraisal cycle.
           </p>
         </div>
         <button onClick={analyze} disabled={loading || records.length === 0} style={{
@@ -115,6 +122,12 @@ export default function TalentManagementModule() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select value={cycle ?? ''} onChange={(e) => setCycle(Number(e.target.value))} style={{
+          background: 'var(--card)', border: '1px solid rgba(184,68,128,0.35)', borderRadius: 8,
+          padding: '8px 12px', fontSize: 12.5, color: 'var(--magenta)', fontWeight: 500,
+        }}>
+          {cycles.map((c) => <option key={c} value={c}>Cycle {c}</option>)}
+        </select>
         <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} style={{
           background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
           padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
@@ -145,7 +158,7 @@ export default function TalentManagementModule() {
         )}
       </div>
 
-      <TalentCharts records={records} />
+      <AppraisalChart records={records} allActiveRecords={allActiveRecords} />
 
       {/* Promotion & succession candidates */}
       {records.length > 0 && (
@@ -194,14 +207,11 @@ export default function TalentManagementModule() {
       </div>
 
       {records.length === 0 && (
-        <div style={{
-          background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
-          padding: '48px 32px', textAlign: 'center',
-        }}>
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current filter</div>
+          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current selection</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', opacity: 0.7, marginTop: 4 }}>
-            Add records in Document tagged "Talent data", or clear the filters above.
+            Add records in Document tagged "Talent data", or adjust the cycle/filters above.
           </div>
         </div>
       )}

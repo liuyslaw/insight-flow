@@ -30,7 +30,11 @@ export default function OnboardingModule() {
     setTemplates(getDocumentsByType('onboarding'))
     setPolicyDocs(getDocumentsByType('policy'))
     const talentDocs = getDocumentsByType('talent')
-    setTalentRecords(parseTalentRecords(talentDocs.map((d) => d.body).join('\n\n---\n\n')))
+    const allRecords = parseTalentRecords(talentDocs.map((d) => d.body).join('\n\n---\n\n'))
+    const cycles = [...new Set(allRecords.map((r) => r.appraisalCycle))].filter(Boolean)
+    const latestCycle = cycles.length ? Math.max(...cycles) : null
+    const current = allRecords.filter((r) => r.status === 'Active' && (latestCycle == null || r.appraisalCycle === latestCycle))
+    setTalentRecords(current)
   }, [])
 
   function toggleRecord(i) {

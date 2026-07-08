@@ -43,16 +43,24 @@ export default function OverviewModule({ onNavigate }) {
     () => parseTalentRecords(talentDocs.map((d) => d.body).join('\n\n---\n\n')),
     [talentDocs]
   )
+  const latestCycle = useMemo(() => {
+    const cycles = [...new Set(records.map((r) => r.appraisalCycle))].filter(Boolean)
+    return cycles.length ? Math.max(...cycles) : null
+  }, [records])
+  const currentRecords = useMemo(
+    () => records.filter((r) => r.status === 'Active' && (latestCycle == null || r.appraisalCycle === latestCycle)),
+    [records, latestCycle]
+  )
 
   const talentCount = docs.filter((d) => d.type === 'talent').length
   const policyCount = docs.filter((d) => d.type === 'policy').length
   const onboardingCount = docs.filter((d) => d.type === 'onboarding').length
-  const promotionCandidates = records.filter((r) => r.rating >= 4).length
-  const withDemographics = records.filter((r) => r.age != null || r.gender || r.yearsOfService != null).length
-  const businessUnits = new Set(records.map((r) => r.businessUnit).filter(Boolean)).size
+  const promotionCandidates = currentRecords.filter((r) => r.rating >= 4).length
+  const withDemographics = currentRecords.filter((r) => r.age != null || r.gender || r.yearsOfService != null).length
+  const businessUnits = new Set(currentRecords.map((r) => r.businessUnit).filter(Boolean)).size
 
   const stats = [
-    { label: 'Talent records', value: records.length },
+    { label: 'Talent records (current)', value: currentRecords.length },
     { label: 'Promotion candidates', value: promotionCandidates },
     { label: 'With demographic data', value: withDemographics },
     { label: 'Policy documents', value: policyCount },

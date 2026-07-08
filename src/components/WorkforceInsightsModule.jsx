@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
-import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2 } from 'lucide-react'
+import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2, TrendingDown } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, computeAttrition } from '../lib/parseTalentDocs.js'
 import { buildWorkforceReportDocx } from '../lib/buildWorkforceReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 
 const ageColor = '#fbbf24'
 const tenureColor = '#B84480'
+const levelColor = '#B84480'
+const siteColor = '#f59e0b'
+const functionColor = '#3b82f6'
+const attritionColor = '#ef4444'
 const genderColors = { Male: '#3b82f6', Female: '#f59e0b', Other: '#22c55e', Unknown: '#71717A' }
 
 const tooltipStyle = {
@@ -39,12 +43,14 @@ const TENURE_RANGES = {
 
 export default function WorkforceInsightsModule() {
   const [talentDocs, setTalentDocs] = useState([])
+  const [cycle, setCycle] = useState(null)
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [drill, setDrill] = useState(null)
   const [summary, setSummary] = useState(null)
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [summaryError, setSummaryError] = useState(null)
+  const [exportingDocx, setExportingDocx] = useState(false)
 
   useEffect(() => { setTalentDocs(getDocumentsByType('talent')) }, [])
 
@@ -53,17 +59,39 @@ export default function WorkforceInsightsModule() {
     [talentDocs]
   )
 
-  const siteOptions = useMemo(() => countBy(allRecords, 'site').map((c) => c.name), [allRecords])
-  const functionOptions = useMemo(() => countBy(allRecords, 'function').map((c) => c.name), [allRecords])
+  const cycles = useMemo(
+    () => [...new Set(allRecords.map((r) => r.appraisalCycle))].filter(Boolean).sort((a, b) => b - a),
+    [allRecords]
+  )
+  useEffect(() => { if (cycles.length && cycle == null) setCycle(cycles[0]) }, [cycles, cycle])
 
-  const records = useMemo(() => allRecords.filter((r) =>
+  // Active workforce for the selected cycle = current composition snapshot
+  const activeInCycle = useMemo(
+    () => allRecords.filter((r) => r.status === 'Active' && (cycle == null || r.appraisalCycle === cycle)),
+    [allRecords, cycle]
+  )
+
+  const siteOptions = useMemo(() => countBy(activeInCycle, 'site').map((c) => c.name), [activeInCycle])
+  const functionOptions = useMemo(() => countBy(activeInCycle, 'function').map((c) => c.name), [activeInCycle])
+
+  const records = useMemo(() => activeInCycle.filter((r) =>
     (siteFilter === 'all' || r.site === siteFilter) &&
     (functionFilter === 'all' || r.function === functionFilter)
-  ), [allRecords, siteFilter, functionFilter])
+  ), [activeInCycle, siteFilter, functionFilter])
 
-  const filterLabel = siteFilter === 'all' && functionFilter === 'all'
-    ? 'All records'
-    : [siteFilter !== 'all' ? siteFilter : null, functionFilter !== 'all' ? functionFilter : null].filter(Boolean).join(' · ')
+  const filterLabel = [
+    cycle ? `Cycle ${cycle}` : null,
+    siteFilter !== 'all' ? siteFilter : null,
+    functionFilter !== 'all' ? functionFilter : null,
+  ].filter(Boolean).join(' · ') || 'All records'
+
+  const byLevel = useMemo(() => countBy(records, 'level').sort((a, b) => {
+    const na = parseInt(a.name.replace('L', ''), 10) || 0
+    const nb = parseInt(b.name.replace('L', ''), 10) || 0
+    return na - nb
+  }), [records])
+  const bySite = useMemo(() => countBy(records, 'site'), [records])
+  const byFunction = useMemo(() => countBy(records, 'function').sort((a, b) => b.value - a.value), [records])
 
   const withDemo = records.filter((r) => r.age != null || r.gender || r.yearsOfService != null)
   const ageData = countByAgeBucket(records)
@@ -75,7 +103,17 @@ export default function WorkforceInsightsModule() {
   })
   const genderData = Object.entries(genderCounts).map(([name, value]) => ({ name, value }))
 
-  useEffect(() => { setSummary(null) }, [siteFilter, functionFilter])
+  // Attrition — uses the unfiltered site/function set within the selected cycle (attrition is a whole-cycle metric)
+  const attrition = useMemo(() => cycle != null ? computeAttrition(allRecords, cycle) : null, [allRecords, cycle])
+  const attritionByYear = useMemo(
+    () => cycles.map((c) => {
+      const a = computeAttrition(allRecords, c)
+      return { name: String(c), value: Number(a.rate.toFixed(1)) }
+    }).reverse(),
+    [allRecords, cycles]
+  )
+
+  useEffect(() => { setSummary(null) }, [cycle, siteFilter, functionFilter])
 
   function drillAge(bucketLabel) {
     setDrill({ label: `Age ${bucketLabel}`, matches: records.filter((r) => r.age != null && AGE_RANGES[bucketLabel]?.(r.age)) })
@@ -86,13 +124,23 @@ export default function WorkforceInsightsModule() {
   function drillGender(g) {
     setDrill({ label: `Gender: ${g}`, matches: records.filter((r) => (r.gender || 'Unknown') === g) })
   }
+  function drillField(label, field, value) {
+    setDrill({ label, matches: records.filter((r) => r[field] === value) })
+  }
+  function drillAttrition() {
+    if (!attrition) return
+    setDrill({ label: `Left in Cycle ${cycle}`, matches: attrition.leavers })
+  }
 
   async function generateSummary() {
     setLoadingSummary(true); setSummaryError(null); setSummary(null)
     try {
       const res = await fetch('/api/workforce', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData }),
+        body: JSON.stringify({
+          scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData,
+          attritionRate: attrition?.rate?.toFixed(1), leaverCount: attrition?.leaverCount,
+        }),
       })
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
       const data = await res.json()
@@ -102,21 +150,23 @@ export default function WorkforceInsightsModule() {
     } finally { setLoadingSummary(false) }
   }
 
-  const [exportingDocx, setExportingDocx] = useState(false)
-
   async function exportWordReport() {
     setExportingDocx(true)
     try {
-      await buildWorkforceReportDocx({ scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData, summary })
+      await buildWorkforceReportDocx({
+        scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData,
+        attritionRate: attrition?.rate?.toFixed(1), leaverCount: attrition?.leaverCount, summary,
+      })
     } catch (err) {
       setSummaryError('Could not generate the Word report. Try again.')
     } finally { setExportingDocx(false) }
   }
 
   function exportExcelData() {
-    const rows = withDemo.map((r) => ({
+    const rows = records.map((r) => ({
       Employee: r.employee || '', Role: r.role, Site: r.site, 'Business Unit': r.businessUnit || '',
-      Level: r.level, Gender: r.gender || '', Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
+      Level: r.level, 'Appraisal Cycle': r.appraisalCycle ?? '', Gender: r.gender || '',
+      Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
     }))
     exportRowsToExcel(rows, `InsightFlow-Workforce-Data-${new Date().toISOString().slice(0, 10)}`, 'Workforce Data')
   }
@@ -128,13 +178,19 @@ export default function WorkforceInsightsModule() {
         <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>Workforce Insights</h2>
       </div>
       <p style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 560, marginBottom: 20 }}>
-        Age, gender, and tenure mix across the workforce in Document — a quick read on whether the
-        overall composition looks healthy, separate from the job-level and appraisal consistency
+        Headcount, composition, and attrition across the workforce in Document, for a selected
+        cycle — a strategic read on workforce health, separate from the appraisal and development
         work in Talent Management.
       </p>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <select value={cycle ?? ''} onChange={(e) => setCycle(Number(e.target.value))} style={{
+          background: 'var(--card)', border: '1px solid rgba(251,191,36,0.35)', borderRadius: 8,
+          padding: '8px 12px', fontSize: 12.5, color: '#fbbf24', fontWeight: 500,
+        }}>
+          {cycles.map((c) => <option key={c} value={c}>Cycle {c}</option>)}
+        </select>
         <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} style={{
           background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
           padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
@@ -154,7 +210,7 @@ export default function WorkforceInsightsModule() {
             background: 'none', fontSize: 11.5, color: 'var(--text3)', padding: '8px 4px',
           }}>Clear filters</button>
         )}
-        {withDemo.length > 0 && (
+        {records.length > 0 && (
           <button onClick={exportExcelData} style={{
             display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto',
             background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 7,
@@ -168,62 +224,126 @@ export default function WorkforceInsightsModule() {
       {records.length === 0 && (
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current filter</div>
+          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current selection</div>
         </div>
       )}
 
-      {records.length > 0 && withDemo.length === 0 && (
-        <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, padding: '12px 16px', marginBottom: 18, fontSize: 12, color: 'var(--gold)' }}>
-          None of the current talent records carry age, gender, or years-of-service data. Add these columns to an Excel import, or include GENDER/AGE/YEARS OF SERVICE lines in a pasted record.
-        </div>
-      )}
-
-      {withDemo.length > 0 && (
+      {records.length > 0 && (
         <>
+          {/* Attrition stat strip */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+            <button onClick={drillAttrition} style={{
+              textAlign: 'left', flex: '1 1 200px', minWidth: 180, background: 'var(--card)',
+              border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '14px 16px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <TrendingDown size={13} color={attritionColor} />
+                <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+                  Attrition — Cycle {cycle}
+                </span>
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: attritionColor }}>{attrition?.rate?.toFixed(1)}%</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{attrition?.leaverCount} left of {attrition?.headcount} in cycle</div>
+            </button>
+            {attritionByYear.length > 1 && (
+              <ChartCard title="Attrition Rate — Year on Year">
+                <ResponsiveContainer width="100%" height={110}>
+                  <BarChart data={attritionByYear}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                    <YAxis tick={axisStyle} axisLine={false} tickLine={false} width={30} unit="%" />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Bar dataKey="value" fill={attritionColor} radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            )}
+          </div>
+          <p style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: -10, marginBottom: 18, fontStyle: 'italic' }}>
+            Attrition rate = leavers in cycle ÷ (active + leavers in cycle) × 100 — a simplified phase-1 proxy, not official HR methodology.
+          </p>
+
           <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 12 }}>Click any bar or slice to see who's behind the number.</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: drill ? 14 : 0 }}>
-            <ChartCard title="Age Distribution">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={ageData}>
+
+          {/* Headcount charts */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
+            <ChartCard title="Headcount by Job Level">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={byLevel}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
                   <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="value" fill={ageColor} radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => drillAge(d.name)} />
+                  <Bar dataKey="value" fill={levelColor} radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => drillField(`Level ${d.name}`, 'level', d.name)} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
-
-            <ChartCard title="Gender Mix">
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie data={genderData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={3} cursor="pointer"
-                    onClick={(d) => drillGender(d.name)}>
-                    {genderData.map((entry, i) => (
-                      <Cell key={i} fill={genderColors[entry.name] || genderColors.Unknown} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: 11, color: 'var(--text3)' }} />
-                </PieChart>
+            <ChartCard title="Headcount by Site">
+              <ResponsiveContainer width="100%" height={Math.max(180, bySite.length * 34)}>
+                <BarChart data={bySite} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                  <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis dataKey="name" type="category" tick={{ ...axisStyle, fontSize: 10.5 }} axisLine={false} tickLine={false} width={110} interval={0} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                  <Bar dataKey="value" fill={siteColor} radius={[0, 4, 4, 0]} cursor="pointer" onClick={(d) => drillField(d.name, 'site', d.name)} />
+                </BarChart>
               </ResponsiveContainer>
             </ChartCard>
-
-            <ChartCard title="Years of Service">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={tenureData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
-                  <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
+            <ChartCard title="Headcount by Function">
+              <ResponsiveContainer width="100%" height={Math.max(180, byFunction.length * 30)}>
+                <BarChart data={byFunction} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                  <XAxis type="number" tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <YAxis dataKey="name" type="category" tick={{ ...axisStyle, fontSize: 10.5 }} axisLine={false} tickLine={false} width={110} interval={0} />
                   <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar dataKey="value" fill={tenureColor} radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => drillTenure(d.name)} />
+                  <Bar dataKey="value" fill={functionColor} radius={[0, 4, 4, 0]} cursor="pointer" onClick={(d) => drillField(d.name, 'function', d.name)} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
 
+          {withDemo.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: drill ? 14 : 0 }}>
+              <ChartCard title="Age Distribution">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={ageData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={axisStyle} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
+                    <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Bar dataKey="value" fill={ageColor} radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => drillAge(d.name)} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard title="Gender Mix">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={genderData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={3} cursor="pointer" onClick={(d) => drillGender(d.name)}>
+                      {genderData.map((entry, i) => <Cell key={i} fill={genderColors[entry.name] || genderColors.Unknown} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: 'var(--text3)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard title="Years of Service">
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={tenureData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
+                    <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Bar dataKey="value" fill={tenureColor} radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => drillTenure(d.name)} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+          )}
+
           {drill && (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 20, marginTop: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Users size={13} color="var(--text3)" />
@@ -242,7 +362,7 @@ export default function WorkforceInsightsModule() {
                   }}>
                     <span style={{ color: 'var(--text)' }}>{r.employee || <em style={{ color: 'var(--text3)' }}>Name not provided</em>}</span>
                     <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 11 }}>
-                      {r.role} · {r.site} · Age {r.age ?? '—'} · {r.yearsOfService ?? '—'} yrs
+                      {r.role} · {r.site}{r.exitDate ? ` · left ${r.exitDate}` : ''}
                     </span>
                   </div>
                 ))}
@@ -291,7 +411,7 @@ export default function WorkforceInsightsModule() {
             </div>
           ) : (
             <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
-              Generate a narrative read on this selection's composition — only aggregated counts are sent, no individual employee data.
+              Generate a narrative read on this selection — only aggregated counts are sent, no individual employee data.
             </p>
           )}
 
