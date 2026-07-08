@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react'
-import { FileText, Users, Headset, UserPlus } from 'lucide-react'
+import { FileText, Users, Headset, UserPlus, Activity } from 'lucide-react'
 import TopBar from './components/TopBar.jsx'
 import DocumentModule from './components/DocumentModule.jsx'
 import TalentManagementModule from './components/TalentManagementModule.jsx'
 import AdminServicesModule from './components/AdminServicesModule.jsx'
 import OnboardingModule from './components/OnboardingModule.jsx'
+import WorkforceInsightsModule from './components/WorkforceInsightsModule.jsx'
 import { getDocuments } from './data/documentStore.js'
 
-const accentVar = { gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)' }
+const accentVar = { gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24' }
 const accentTint = {
   gold: 'rgba(245,158,11,0.1)',
   magenta: 'rgba(184,68,128,0.1)',
   blue: 'rgba(59,130,246,0.1)',
   green: 'rgba(34,197,94,0.1)',
+  amber: 'rgba(251,191,36,0.1)',
 }
 
 export default function App() {
@@ -26,6 +28,7 @@ export default function App() {
   const modules = [
     { id: 'document', label: 'Document', Icon: FileText, accent: 'gold', badge: docCount },
     { id: 'talent', label: 'Talent Management', Icon: Users, accent: 'magenta', badge: null },
+    { id: 'workforce', label: 'Workforce Insights', Icon: Activity, accent: 'amber', badge: null },
     { id: 'onboarding', label: 'Onboarding', Icon: UserPlus, accent: 'green', badge: null },
     { id: 'admin', label: 'Admin Services', Icon: Headset, accent: 'blue', badge: null },
   ]
@@ -88,6 +91,7 @@ export default function App() {
         <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg)' }}>
           {active === 'document' && <DocumentModule onChange={() => setDocCount(getDocuments().length)} />}
           {active === 'talent' && <TalentManagementModule />}
+          {active === 'workforce' && <WorkforceInsightsModule />}
           {active === 'onboarding' && <OnboardingModule />}
           {active === 'admin' && <AdminServicesModule />}
         </main>
