@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
-import { Activity, Users, X } from 'lucide-react'
+import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countByAgeBucket, countByTenureBucket } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket } from '../lib/parseTalentDocs.js'
 
 const ageColor = '#fbbf24'
 const tenureColor = '#B84480'
@@ -26,16 +26,42 @@ function ChartCard({ title, children }) {
   )
 }
 
+const AGE_RANGES = {
+  'Under 25': (a) => a < 25, '25–34': (a) => a >= 25 && a <= 34, '35–44': (a) => a >= 35 && a <= 44,
+  '45–54': (a) => a >= 45 && a <= 54, '55+': (a) => a >= 55,
+}
+const TENURE_RANGES = {
+  '< 1 yr': (y) => y < 1, '1–3 yrs': (y) => y >= 1 && y <= 3, '4–7 yrs': (y) => y >= 4 && y <= 7,
+  '8–15 yrs': (y) => y >= 8 && y <= 15, '15+ yrs': (y) => y > 15,
+}
+
 export default function WorkforceInsightsModule() {
   const [talentDocs, setTalentDocs] = useState([])
+  const [siteFilter, setSiteFilter] = useState('all')
+  const [functionFilter, setFunctionFilter] = useState('all')
   const [drill, setDrill] = useState(null)
+  const [summary, setSummary] = useState(null)
+  const [loadingSummary, setLoadingSummary] = useState(false)
+  const [summaryError, setSummaryError] = useState(null)
 
   useEffect(() => { setTalentDocs(getDocumentsByType('talent')) }, [])
 
-  const records = useMemo(
+  const allRecords = useMemo(
     () => parseTalentRecords(talentDocs.map((d) => d.body).join('\n\n---\n\n')),
     [talentDocs]
   )
+
+  const siteOptions = useMemo(() => countBy(allRecords, 'site').map((c) => c.name), [allRecords])
+  const functionOptions = useMemo(() => countBy(allRecords, 'function').map((c) => c.name), [allRecords])
+
+  const records = useMemo(() => allRecords.filter((r) =>
+    (siteFilter === 'all' || r.site === siteFilter) &&
+    (functionFilter === 'all' || r.function === functionFilter)
+  ), [allRecords, siteFilter, functionFilter])
+
+  const filterLabel = siteFilter === 'all' && functionFilter === 'all'
+    ? 'All records'
+    : [siteFilter !== 'all' ? siteFilter : null, functionFilter !== 'all' ? functionFilter : null].filter(Boolean).join(' · ')
 
   const withDemo = records.filter((r) => r.age != null || r.gender || r.yearsOfService != null)
   const ageData = countByAgeBucket(records)
@@ -47,24 +73,31 @@ export default function WorkforceInsightsModule() {
   })
   const genderData = Object.entries(genderCounts).map(([name, value]) => ({ name, value }))
 
+  useEffect(() => { setSummary(null) }, [siteFilter, functionFilter])
+
   function drillAge(bucketLabel) {
-    const ranges = {
-      'Under 25': (a) => a < 25, '25–34': (a) => a >= 25 && a <= 34, '35–44': (a) => a >= 35 && a <= 44,
-      '45–54': (a) => a >= 45 && a <= 54, '55+': (a) => a >= 55,
-    }
-    setDrill({ label: `Age ${bucketLabel}`, matches: records.filter((r) => r.age != null && ranges[bucketLabel]?.(r.age)) })
+    setDrill({ label: `Age ${bucketLabel}`, matches: records.filter((r) => r.age != null && AGE_RANGES[bucketLabel]?.(r.age)) })
   }
-
   function drillTenure(bucketLabel) {
-    const ranges = {
-      '< 1 yr': (y) => y < 1, '1–3 yrs': (y) => y >= 1 && y <= 3, '4–7 yrs': (y) => y >= 4 && y <= 7,
-      '8–15 yrs': (y) => y >= 8 && y <= 15, '15+ yrs': (y) => y > 15,
-    }
-    setDrill({ label: `Tenure ${bucketLabel}`, matches: records.filter((r) => r.yearsOfService != null && ranges[bucketLabel]?.(r.yearsOfService)) })
+    setDrill({ label: `Tenure ${bucketLabel}`, matches: records.filter((r) => r.yearsOfService != null && TENURE_RANGES[bucketLabel]?.(r.yearsOfService)) })
   }
-
   function drillGender(g) {
     setDrill({ label: `Gender: ${g}`, matches: records.filter((r) => (r.gender || 'Unknown') === g) })
+  }
+
+  async function generateSummary() {
+    setLoadingSummary(true); setSummaryError(null); setSummary(null)
+    try {
+      const res = await fetch('/api/workforce', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: filterLabel, recordCount: withDemo.length, ageData, genderData, tenureData }),
+      })
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      const data = await res.json()
+      setSummary(data.narrative)
+    } catch (err) {
+      setSummaryError(err.message || 'Something went wrong. Try again.')
+    } finally { setLoadingSummary(false) }
   }
 
   return (
@@ -79,10 +112,33 @@ export default function WorkforceInsightsModule() {
         work in Talent Management.
       </p>
 
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} style={{
+          background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
+          padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
+        }}>
+          <option value="all">All sites</option>
+          {siteOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select value={functionFilter} onChange={(e) => setFunctionFilter(e.target.value)} style={{
+          background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
+          padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
+        }}>
+          <option value="all">All functions</option>
+          {functionOptions.map((f) => <option key={f} value={f}>{f}</option>)}
+        </select>
+        {(siteFilter !== 'all' || functionFilter !== 'all') && (
+          <button onClick={() => { setSiteFilter('all'); setFunctionFilter('all') }} style={{
+            background: 'none', fontSize: 11.5, color: 'var(--text3)', padding: '8px 4px',
+          }}>Clear filters</button>
+        )}
+      </div>
+
       {records.length === 0 && (
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
-          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data in the repository yet</div>
+          <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current filter</div>
         </div>
       )}
 
@@ -137,7 +193,7 @@ export default function WorkforceInsightsModule() {
           </div>
 
           {drill && (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Users size={13} color="var(--text3)" />
@@ -163,6 +219,42 @@ export default function WorkforceInsightsModule() {
               </div>
             </div>
           )}
+
+          {/* AI Summary */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+              AI Summary — {filterLabel}
+            </span>
+            <button onClick={generateSummary} disabled={loadingSummary} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.35)',
+              borderRadius: 8, padding: '8px 16px', color: '#fbbf24', fontSize: 12, fontWeight: 500,
+              opacity: loadingSummary ? 0.5 : 1,
+            }}>
+              {loadingSummary
+                ? <><RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
+                : <><Sparkles size={12} /> {summary ? 'Regenerate summary' : 'Generate summary'}</>}
+            </button>
+          </div>
+
+          {summaryError && (
+            <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '12px 16px', marginBottom: 12, display: 'flex', gap: 8 }}>
+              <AlertTriangle size={14} color="var(--red)" />
+              <span style={{ fontSize: 12.5, color: 'var(--red)' }}>{summaryError}</span>
+            </div>
+          )}
+
+          {summary ? (
+            <div style={{ background: 'var(--card)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '20px 24px' }}>
+              <p style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{summary}</p>
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
+              Generate a narrative read on this selection's composition — only aggregated counts are sent, no individual employee data.
+            </p>
+          )}
+
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </>
       )}
     </div>
