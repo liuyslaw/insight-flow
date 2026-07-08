@@ -31,6 +31,7 @@ export function parseTalentRecords(text) {
     const site = block.match(/SITE:\s*(.+)/)?.[1]?.trim()
     const employee = block.match(/EMPLOYEE:\s*(.+)/)?.[1]?.trim()
     const role = block.match(/ROLE:\s*(.+)/)?.[1]?.trim()
+    const businessUnit = block.match(/BUSINESS UNIT:\s*(.+)/)?.[1]?.trim()
     const level = block.match(/ASSIGNED LEVEL:\s*(L?\d+)/i)?.[1]?.trim()
     const rating = block.match(/APPRAISAL RATING:\s*(\d)/)?.[1]
     const gender = block.match(/GENDER:\s*(\w+)/i)?.[1]?.trim()
@@ -43,6 +44,7 @@ export function parseTalentRecords(text) {
       site: site || 'Unknown site',
       employee: employee || null,
       role: role || 'Unknown role',
+      businessUnit: businessUnit || null,
       level: level ? (level.startsWith('L') ? level : `L${level}`) : 'Unknown',
       rating: rating ? Number(rating) : null,
       function: classifyFunction(role || ''),
