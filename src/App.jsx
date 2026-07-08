@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { FileText, Users, Headset, UserPlus, Activity } from 'lucide-react'
+import { FileText, Users, Headset, UserPlus, Activity, LayoutDashboard } from 'lucide-react'
 import TopBar from './components/TopBar.jsx'
+import OverviewModule from './components/OverviewModule.jsx'
 import DocumentModule from './components/DocumentModule.jsx'
 import TalentManagementModule from './components/TalentManagementModule.jsx'
 import AdminServicesModule from './components/AdminServicesModule.jsx'
@@ -8,8 +9,9 @@ import OnboardingModule from './components/OnboardingModule.jsx'
 import WorkforceInsightsModule from './components/WorkforceInsightsModule.jsx'
 import { getDocuments } from './data/documentStore.js'
 
-const accentVar = { gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24' }
+const accentVar = { white: 'var(--white)', gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24' }
 const accentTint = {
+  white: 'rgba(255,255,255,0.08)',
   gold: 'rgba(245,158,11,0.1)',
   magenta: 'rgba(184,68,128,0.1)',
   blue: 'rgba(59,130,246,0.1)',
@@ -18,7 +20,7 @@ const accentTint = {
 }
 
 export default function App() {
-  const [active, setActive] = useState('document')
+  const [active, setActive] = useState('overview')
   const [docCount, setDocCount] = useState(0)
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function App() {
   }, [active])
 
   const modules = [
+    { id: 'overview', label: 'Overview', Icon: LayoutDashboard, accent: 'white', badge: null },
     { id: 'document', label: 'Document', Icon: FileText, accent: 'gold', badge: docCount },
     { id: 'talent', label: 'Talent Management', Icon: Users, accent: 'magenta', badge: null },
     { id: 'workforce', label: 'Workforce Insights', Icon: Activity, accent: 'amber', badge: null },
@@ -89,6 +92,7 @@ export default function App() {
 
         {/* Main */}
         <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg)' }}>
+          {active === 'overview' && <OverviewModule onNavigate={setActive} />}
           {active === 'document' && <DocumentModule onChange={() => setDocCount(getDocuments().length)} />}
           {active === 'talent' && <TalentManagementModule />}
           {active === 'workforce' && <WorkforceInsightsModule />}
