@@ -52,6 +52,9 @@ export default function PeriodRangeSelector({ years, start, end, onChangeStart, 
     onChangeEnd({ month: TODAY.month, year: TODAY.year })
   }
 
+  const snapshotYear = Math.max(start.year, end.year)
+  const isRange = start.year !== end.year
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -59,9 +62,17 @@ export default function PeriodRangeSelector({ years, start, end, onChangeStart, 
         <Box label="From" value={start} years={years} onChange={onChangeStart} accentColor={accentColor} />
         <span style={{ color: 'var(--text3)', fontSize: 12 }}>→</span>
         <Box label="To" value={end} years={years} onChange={onChangeEnd} accentColor={accentColor} showYtd onYtd={setYtd} />
+        <span style={{
+          fontSize: 10.5, fontWeight: 600, color: accentColor, background: `${accentColor}18`,
+          border: `1px solid ${accentColor}40`, borderRadius: 6, padding: '4px 10px',
+        }}>
+          Viewing: Cycle {snapshotYear}
+        </span>
       </div>
       <p style={{ fontSize: 10, color: 'var(--text3)', marginTop: 5, marginBottom: 0 }}>
-        Snapshot charts show the "To" period; year-on-year charts compare every cycle in the selected range.
+        {isRange
+          ? `Charts show the "To" period (${snapshotYear}). Year-on-year comparisons use every cycle from "From" to "To".`
+          : 'Change "From" to an earlier year to also see year-on-year trend charts.'}
       </p>
     </div>
   )

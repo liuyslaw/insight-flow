@@ -8,6 +8,7 @@ import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import AppraisalChart from './AppraisalChart.jsx'
 import PeriodRangeSelector from './PeriodRangeSelector.jsx'
+import AIChatPanel from './AIChatPanel.jsx'
 
 const severityColor = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--text3)' }
 const severityBg = { high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06)', low: 'rgba(255,255,255,0.03)' }
@@ -30,7 +31,7 @@ const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
 export default function TalentManagementModule() {
   const [talentDocs, setTalentDocs] = useState([])
   const [trainingDocs, setTrainingDocs] = useState([])
-  const [startPeriod, setStartPeriod] = useState({ month: 0, year: 2025 })
+  const [startPeriod, setStartPeriod] = useState({ month: 11, year: 2026 })
   const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
@@ -39,6 +40,9 @@ export default function TalentManagementModule() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
   const [movementDrill, setMovementDrill] = useState(null)
+  const [talentSummary, setTalentSummary] = useState(null)
+  const [loadingTalentSummary, setLoadingTalentSummary] = useState(false)
+  const [talentSummaryError, setTalentSummaryError] = useState(null)
 
   useEffect(() => {
     setTalentDocs(getDocumentsByType('talent'))
@@ -59,8 +63,11 @@ export default function TalentManagementModule() {
     [allRecords]
   )
 
-  const rangeStartYear = Math.min(startPeriod.year, endPeriod.year)
-  const rangeEndYear = Math.max(startPeriod.year, endPeriod.year)
+  // From/To are honored directly — no min/max swapping, which previously
+  // caused the snapshot to silently ignore whichever box was just changed.
+  const rangeStartYear = startPeriod.year
+  const rangeEndYear = endPeriod.year
+  const invalidRange = rangeStartYear > rangeEndYear
   const previousYear = rangeEndYear - 1
 
   const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
@@ -105,12 +112,53 @@ export default function TalentManagementModule() {
   const trainingByCourse = countByCourse(relevantTraining)
   const employeesWithTraining = new Set(relevantTraining.map((t) => t.employee)).size
 
-  const periodLabel = rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
+  function handleStartChange(next) {
+    setStartPeriod(next)
+    if (next.year > endPeriod.year) setEndPeriod(next)
+  }
+  function handleEndChange(next) {
+    setEndPeriod(next)
+    if (next.year < startPeriod.year) setStartPeriod(next)
+  }
+
+  const periodLabel = invalidRange
+    ? `Invalid range (From ${rangeStartYear} is after To ${rangeEndYear})`
+    : rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
     functionFilter !== 'all' ? functionFilter : null,
   ].filter(Boolean).join(' · ')
+
+  const ratingCounts = [1, 2, 3, 4, 5].map((r) => ({
+    rating: r, count: records.filter((rec) => rec.rating === r).length,
+  }))
+
+  useEffect(() => { setTalentSummary(null) }, [rangeStartYear, rangeEndYear, siteFilter, functionFilter])
+
+  async function generateTalentSummary() {
+    setLoadingTalentSummary(true); setTalentSummaryError(null); setTalentSummary(null)
+    try {
+      const res = await fetch('/api/insight-chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          module: 'talent',
+          context: {
+            scope: filterLabel, totalRecords: records.length, appraisalRatingDistribution: ratingCounts,
+            talentMovement: movementCounts, trainingCompletionStatus: trainingStatusData,
+            trainingByCourse, employeesWithTraining, totalEmployeesInSelection: records.length,
+          },
+          question: 'Give me a brief summary of the current talent movement, training progress, and appraisal picture for this selection.',
+          history: [],
+        }),
+      })
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      const data = await res.json()
+      setTalentSummary(data.answer)
+    } catch (err) {
+      setTalentSummaryError(err.message || 'Something went wrong. Try again.')
+    } finally { setLoadingTalentSummary(false) }
+  }
 
   async function analyze() {
     const combined = records.map((r) => r.raw).join('\n\n---\n\n')
@@ -179,11 +227,17 @@ export default function TalentManagementModule() {
           years={cycles.length ? cycles : [2025, 2026]}
           start={startPeriod}
           end={endPeriod}
-          onChangeStart={setStartPeriod}
-          onChangeEnd={setEndPeriod}
+          onChangeStart={handleStartChange}
+          onChangeEnd={handleEndChange}
           accentColor="var(--magenta)"
         />
       </div>
+
+      {invalidRange && (
+        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--red)' }}>
+          "From" ({rangeStartYear}) is after "To" ({rangeEndYear}) — set "From" to the same year or earlier.
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -329,6 +383,56 @@ export default function TalentManagementModule() {
                 </div>
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {/* AI Insights — interactive */}
+      {records.length > 0 && (
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+            <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+              AI Insights — {filterLabel}
+            </span>
+            <button onClick={generateTalentSummary} disabled={loadingTalentSummary} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'rgba(184,68,128,0.12)', border: '1px solid rgba(184,68,128,0.35)',
+              borderRadius: 8, padding: '8px 16px', color: 'var(--magenta)', fontSize: 12, fontWeight: 500,
+              opacity: loadingTalentSummary ? 0.5 : 1,
+            }}>
+              {loadingTalentSummary
+                ? <><RefreshCw size={12} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
+                : <><Sparkles size={12} /> {talentSummary ? 'Regenerate summary' : 'Generate summary'}</>}
+            </button>
+          </div>
+
+          {talentSummaryError && (
+            <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '12px 16px', marginBottom: 12, display: 'flex', gap: 8 }}>
+              <AlertTriangle size={14} color="var(--red)" />
+              <span style={{ fontSize: 12.5, color: 'var(--red)' }}>{talentSummaryError}</span>
+            </div>
+          )}
+
+          {talentSummary ? (
+            <AIChatPanel
+              moduleKey="talent"
+              accentColor="var(--magenta)"
+              initialMessage={talentSummary}
+              context={{
+                scope: filterLabel, totalRecords: records.length, appraisalRatingDistribution: ratingCounts,
+                talentMovement: movementCounts, trainingCompletionStatus: trainingStatusData,
+                trainingByCourse, employeesWithTraining,
+              }}
+              starterQuestions={[
+                'Who is in the Needs Attention group?',
+                'Which course has the lowest completion rate?',
+                'Is training completion linked to rising talent?',
+              ]}
+            />
+          ) : (
+            <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
+              Generate a summary to start an interactive conversation about movement, training, and appraisal data — only aggregated counts are sent, no individual employee data beyond what's already shown above.
+            </p>
           )}
         </div>
       )}

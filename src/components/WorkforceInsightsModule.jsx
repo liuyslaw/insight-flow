@@ -6,6 +6,7 @@ import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, com
 import { buildWorkforceReportDocx } from '../lib/buildWorkforceReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import PeriodRangeSelector from './PeriodRangeSelector.jsx'
+import AIChatPanel from './AIChatPanel.jsx'
 
 const ageColor = '#fbbf24'
 const tenureColor = '#B84480'
@@ -106,7 +107,7 @@ function ChartPicker({ selected, onToggle }) {
 
 export default function WorkforceInsightsModule() {
   const [talentDocs, setTalentDocs] = useState([])
-  const [startPeriod, setStartPeriod] = useState({ month: 0, year: 2025 })
+  const [startPeriod, setStartPeriod] = useState({ month: 11, year: 2026 })
   const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
@@ -129,8 +130,11 @@ export default function WorkforceInsightsModule() {
     [allRecords]
   )
 
-  const rangeStartYear = Math.min(startPeriod.year, endPeriod.year)
-  const rangeEndYear = Math.max(startPeriod.year, endPeriod.year)
+  // From/To are honored directly — no min/max swapping, which previously
+  // caused the snapshot to silently ignore whichever box was just changed.
+  const rangeStartYear = startPeriod.year
+  const rangeEndYear = endPeriod.year
+  const invalidRange = rangeStartYear > rangeEndYear
   const cycleRangeYears = useMemo(
     () => cycles.filter((c) => c >= rangeStartYear && c <= rangeEndYear),
     [cycles, rangeStartYear, rangeEndYear]
@@ -150,7 +154,18 @@ export default function WorkforceInsightsModule() {
     (functionFilter === 'all' || r.function === functionFilter)
   ), [activeInCycle, siteFilter, functionFilter])
 
-  const periodLabel = rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
+  function handleStartChange(next) {
+    setStartPeriod(next)
+    if (next.year > endPeriod.year) setEndPeriod(next)
+  }
+  function handleEndChange(next) {
+    setEndPeriod(next)
+    if (next.year < startPeriod.year) setStartPeriod(next)
+  }
+
+  const periodLabel = invalidRange
+    ? `Invalid range (From ${rangeStartYear} is after To ${rangeEndYear})`
+    : rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
@@ -264,11 +279,17 @@ export default function WorkforceInsightsModule() {
           years={cycles.length ? cycles : [2025, 2026]}
           start={startPeriod}
           end={endPeriod}
-          onChangeStart={setStartPeriod}
-          onChangeEnd={setEndPeriod}
+          onChangeStart={handleStartChange}
+          onChangeEnd={handleEndChange}
           accentColor="#fbbf24"
         />
       </div>
+
+      {invalidRange && (
+        <div className="no-print" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--red)' }}>
+          "From" ({rangeStartYear}) is after "To" ({rangeEndYear}) — set "From" to the same year or earlier.
+        </div>
+      )}
 
       {/* Filters */}
       <div className="no-print" style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -475,10 +496,10 @@ export default function WorkforceInsightsModule() {
             </div>
           )}
 
-          {/* AI Summary */}
+          {/* AI Insights — interactive */}
           <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
             <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-              AI Summary — {filterLabel}
+              AI Insights — {filterLabel}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
               {summary && (
@@ -511,12 +532,26 @@ export default function WorkforceInsightsModule() {
           )}
 
           {summary ? (
-            <div style={{ background: 'var(--card)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: 10, padding: '20px 24px' }}>
-              <p style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{summary}</p>
+            <div className="no-print">
+              <AIChatPanel
+                moduleKey="workforce"
+                accentColor="#fbbf24"
+                initialMessage={summary}
+                context={{
+                  scope: filterLabel, ageData, genderData, tenureData,
+                  attritionRate: attrition?.rate?.toFixed(1), leaverCount: attrition?.leaverCount,
+                  headcountByLevel: byLevel, headcountBySite: bySite, headcountByFunction: byFunction,
+                }}
+                starterQuestions={[
+                  'Which site has the most attrition risk?',
+                  'Is the age distribution concentrated anywhere?',
+                  'What does the tenure mix suggest about retention?',
+                ]}
+              />
             </div>
           ) : (
             <p className="no-print" style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
-              Generate a narrative read on this selection — only aggregated counts are sent, no individual employee data.
+              Generate a summary to start an interactive conversation about this selection — only aggregated counts are sent, no individual employee data.
             </p>
           )}
 
