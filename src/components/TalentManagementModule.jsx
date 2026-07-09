@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, TrendingUp, Table2 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, Table2, ArrowUp, ArrowDown, Minus, GraduationCap, X } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countBy } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, computeTalentMovement } from '../lib/parseTalentDocs.js'
+import { parseTrainingRecords, countByStatus, countByCourse } from '../lib/parseTrainingDocs.js'
 import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import AppraisalChart from './AppraisalChart.jsx'
@@ -12,8 +14,22 @@ const severityBg = { high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06
 const severityBorder = { high: 'rgba(239,68,68,0.25)', medium: 'rgba(245,158,11,0.25)', low: 'var(--border)' }
 const flagIcon = { 'Level/JD mismatch': ShieldAlert, 'Rating/narrative mismatch': AlertTriangle, 'Calibration variance': Scale }
 
+const movementMeta = {
+  Rising: { color: 'var(--green)', bg: 'rgba(34,197,94,0.08)', Icon: ArrowUp },
+  Steady: { color: 'var(--text3)', bg: 'rgba(255,255,255,0.03)', Icon: Minus },
+  'Needs Attention': { color: 'var(--red)', bg: 'rgba(239,68,68,0.06)', Icon: ArrowDown },
+}
+const statusColors = { Completed: '#22c55e', 'In Progress': '#f59e0b', 'Not Started': '#71717A' }
+
+const tooltipStyle = {
+  background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 6,
+  fontSize: 12, color: 'var(--text)', padding: '6px 10px',
+}
+const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
+
 export default function TalentManagementModule() {
   const [talentDocs, setTalentDocs] = useState([])
+  const [trainingDocs, setTrainingDocs] = useState([])
   const [startPeriod, setStartPeriod] = useState({ month: 0, year: 2025 })
   const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
@@ -22,12 +38,20 @@ export default function TalentManagementModule() {
   const [exporting, setExporting] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+  const [movementDrill, setMovementDrill] = useState(null)
 
-  useEffect(() => { setTalentDocs(getDocumentsByType('talent')) }, [])
+  useEffect(() => {
+    setTalentDocs(getDocumentsByType('talent'))
+    setTrainingDocs(getDocumentsByType('training'))
+  }, [])
 
   const allRecords = useMemo(
     () => parseTalentRecords(talentDocs.map((d) => d.body).join('\n\n---\n\n')),
     [talentDocs]
+  )
+  const trainingRecords = useMemo(
+    () => parseTrainingRecords(trainingDocs.map((d) => d.body).join('\n\n---\n\n')),
+    [trainingDocs]
   )
 
   const cycles = useMemo(
@@ -35,17 +59,15 @@ export default function TalentManagementModule() {
     [allRecords]
   )
 
-  // Clamp the range to years that actually exist in the data
   const rangeStartYear = Math.min(startPeriod.year, endPeriod.year)
   const rangeEndYear = Math.max(startPeriod.year, endPeriod.year)
+  const previousYear = rangeEndYear - 1
 
   const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
-  // Records within the selected range — used for the year-on-year chart
   const rangeActiveRecords = useMemo(
     () => allActiveRecords.filter((r) => r.appraisalCycle >= rangeStartYear && r.appraisalCycle <= rangeEndYear),
     [allActiveRecords, rangeStartYear, rangeEndYear]
   )
-  // Snapshot cycle = the "To" period's year — drives everything except the YoY chart
   const cycleRecords = useMemo(
     () => allActiveRecords.filter((r) => r.appraisalCycle === rangeEndYear),
     [allActiveRecords, rangeEndYear]
@@ -59,10 +81,29 @@ export default function TalentManagementModule() {
     (functionFilter === 'all' || r.function === functionFilter)
   ), [cycleRecords, siteFilter, functionFilter])
 
-  const promotionCandidates = useMemo(
-    () => records.filter((r) => r.rating >= 4).sort((a, b) => b.rating - a.rating),
-    [records]
+  const hasPriorCycle = cycles.includes(previousYear)
+  const movement = useMemo(() => {
+    if (!hasPriorCycle) return []
+    const all = computeTalentMovement(allActiveRecords, rangeEndYear, previousYear)
+    const filteredEmployees = new Set(records.map((r) => r.employee))
+    return all.filter((r) => filteredEmployees.has(r.employee))
+  }, [hasPriorCycle, allActiveRecords, rangeEndYear, previousYear, records])
+
+  const movementCounts = useMemo(() => {
+    const counts = { Rising: 0, Steady: 0, 'Needs Attention': 0, 'No prior data': 0 }
+    movement.forEach((r) => { counts[r.category] = (counts[r.category] || 0) + 1 })
+    return counts
+  }, [movement])
+
+  // Training & development — scoped to employees in the current site/function selection
+  const currentEmployeeSet = useMemo(() => new Set(records.map((r) => r.employee)), [records])
+  const relevantTraining = useMemo(
+    () => trainingRecords.filter((t) => currentEmployeeSet.has(t.employee)),
+    [trainingRecords, currentEmployeeSet]
   )
+  const trainingStatusData = countByStatus(relevantTraining)
+  const trainingByCourse = countByCourse(relevantTraining)
+  const employeesWithTraining = new Set(relevantTraining.map((t) => t.employee)).size
 
   const periodLabel = rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
   const filterLabel = [
@@ -115,8 +156,8 @@ export default function TalentManagementModule() {
             <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>Talent Management</h2>
           </div>
           <p style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 480 }}>
-            Talent development and appraisal — job level/JD consistency, rating calibration across
-            sites, and promotion readiness, for a selected appraisal cycle.
+            Talent development and appraisal — job level/JD consistency, rating movement, and
+            training progress, for a selected period.
           </p>
         </div>
         <button onClick={analyze} disabled={loading || records.length === 0} style={{
@@ -178,30 +219,116 @@ export default function TalentManagementModule() {
 
       <AppraisalChart records={records} allActiveRecords={rangeActiveRecords} />
 
-      {/* Promotion & succession candidates */}
+      {/* Talent Movement */}
       {records.length > 0 && (
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: 26 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <TrendingUp size={13} color="var(--green)" />
+            <ArrowUp size={13} color="var(--green)" />
             <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-              Promotion &amp; Succession Candidates — rating 4+ ({promotionCandidates.length})
+              Talent Movement — {rangeEndYear} vs {previousYear}
             </span>
           </div>
-          {promotionCandidates.length === 0 ? (
-            <p style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic' }}>No candidates rated 4 or above in the current selection.</p>
+          {!hasPriorCycle ? (
+            <p style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic' }}>
+              No prior cycle ({previousYear}) in the repository yet — movement needs at least two cycles to compare.
+            </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {promotionCandidates.map((r, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
-                  padding: '9px 14px',
-                }}>
-                  <span style={{ fontSize: 12.5, color: 'var(--text)' }}>{r.role} <span style={{ color: 'var(--text3)' }}>— {r.level} — {r.site}</span></span>
-                  <span className="badge badge-green">{r.rating} / 5</span>
+            <>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+                {['Rising', 'Steady', 'Needs Attention'].map((cat) => {
+                  const meta = movementMeta[cat]
+                  return (
+                    <button key={cat} onClick={() => setMovementDrill(cat)} style={{
+                      textAlign: 'left', flex: '1 1 160px', minWidth: 150, background: meta.bg,
+                      border: `1px solid ${meta.color}40`, borderRadius: 9, padding: '12px 14px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <meta.Icon size={13} color={meta.color} />
+                        <span style={{ fontSize: 10.5, color: meta.color, fontWeight: 600 }}>{cat}</span>
+                      </div>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: meta.color }}>{movementCounts[cat] || 0}</div>
+                    </button>
+                  )
+                })}
+              </div>
+              <p style={{ fontSize: 10.5, color: 'var(--text3)', fontStyle: 'italic', marginBottom: movementDrill ? 10 : 0 }}>
+                Rising = rating improved and now 4+. Needs Attention = rating declined. Click a card to see who.
+              </p>
+              {movementDrill && (
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <span style={{ fontSize: 10, color: movementMeta[movementDrill].color, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+                      {movementDrill} — {movementCounts[movementDrill] || 0}
+                    </span>
+                    <button onClick={() => setMovementDrill(null)} style={{ background: 'none' }}><X size={14} color="var(--text3)" /></button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 240, overflowY: 'auto' }}>
+                    {movement.filter((r) => r.category === movementDrill).map((r, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 7,
+                        padding: '7px 12px', fontSize: 12,
+                      }}>
+                        <span style={{ color: 'var(--text)' }}>{r.employee}</span>
+                        <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 11 }}>
+                          {r.role} · {previousYear}: {r.previousRating} → {rangeEndYear}: {r.rating}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Training & Development */}
+      {records.length > 0 && (
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+            <GraduationCap size={13} color="var(--gold)" />
+            <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+              Training &amp; Development
+            </span>
+          </div>
+          {relevantTraining.length === 0 ? (
+            <p style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic' }}>
+              No training records for this selection — add course/completion data in Document, tagged "Training".
+            </p>
+          ) : (
+            <>
+              <p style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 12 }}>
+                {employeesWithTraining} of {records.length} employees in this selection have at least one training assignment.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>Completion Status</div>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={trainingStatusData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
+                      <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
+                      <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {trainingStatusData.map((entry, i) => <Cell key={i} fill={statusColors[entry.name]} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 12 }}>By Course</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {trainingByCourse.map((c) => (
+                      <div key={c.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                        <span style={{ color: 'var(--text2)' }}>{c.name}</span>
+                        <span className="chip">{c.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -229,7 +356,7 @@ export default function TalentManagementModule() {
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current selection</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', opacity: 0.7, marginTop: 4 }}>
-            Add records in Document tagged "Talent data", or adjust the cycle/filters above.
+            Add records in Document tagged "Talent data", or adjust the period/filters above.
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ const typeMeta = {
   talent: { label: 'Talent data', className: 'badge-magenta' },
   policy: { label: 'Policy / admin', className: 'badge-blue' },
   onboarding: { label: 'Onboarding', className: 'badge-green' },
+  training: { label: 'Training', className: 'badge-gold' },
 }
 
 export default function DocumentModule({ onChange }) {
@@ -108,6 +109,7 @@ export default function DocumentModule({ onChange }) {
               <option value="talent">Talent data</option>
               <option value="policy">Policy / admin</option>
               <option value="onboarding">Onboarding</option>
+              <option value="training">Training</option>
             </select>
           </div>
           <p style={{ fontSize: 10.5, color: 'var(--text3)', marginBottom: 10, lineHeight: 1.5 }}>
