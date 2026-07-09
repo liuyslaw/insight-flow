@@ -1,11 +1,13 @@
 // Generic placeholder data modelled on what a job architecture + appraisal
 // rollout typically exports. Not real client data.
 // 50 core employees, each with TWO appraisal cycle records (2025, 2026) —
-// same person, role, site, level; rating/narrative/age/tenure vary by year —
-// so the app can demonstrate year-on-year comparison. Plus 10 additional
-// "leaver" records (5 exited in 2025, 5 in 2026, STATUS: Left + EXIT DATE)
-// to support attrition rate. 110 records total. Shaped around Frencken.s
-// actual segments: Mechatronics and Integrated Manufacturing Services.
+// same person, role, site, level; rating/narrative/age/tenure vary by year.
+// Plus 10 leaver records (5 exited 2025, 5 exited 2026) for attrition, and
+// 6 new-hire records that exist ONLY in 2026 (no 2025 history) — genuine
+// headcount growth between periods, not just a rating change, so switching
+// the period selector produces a real difference in the headcount charts.
+// 116 records total. Shaped around Frencken.s actual segments:
+// Mechatronics and Integrated Manufacturing Services.
 
 export const sampleTalentDocs = `SITE: Singapore HQ
 EMPLOYEE: Wei Lin (placeholder name, SG)
@@ -1773,4 +1775,100 @@ STATUS: Left
 EXIT DATE: June 2026
 GENDER: Male
 AGE: 33
-YEARS OF SERVICE: 7`;
+YEARS OF SERVICE: 7
+
+---
+
+SITE: Singapore HQ
+EMPLOYEE: Rachel (placeholder name, SG)
+ROLE: Semiconductor Test Engineer
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned semiconductor test engineer tasks with moderate supervision within Mechatronics — Semiconductor, documents procedures, and supports troubleshooting within own work area."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 23
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Singapore HQ
+EMPLOYEE: Faizal (placeholder name, SG)
+ROLE: Program Coordinator
+BUSINESS UNIT: Group Corporate
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs program coordinator duties under direct supervision within Group Corporate, follows standard work instructions, and escalates deviations to the shift lead."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 25
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Penang, Malaysia
+EMPLOYEE: Melissa (placeholder name, MY)
+ROLE: Cleanroom Production Technician
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 27
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Eindhoven, Netherlands
+EMPLOYEE: Pieter (placeholder name, EU)
+ROLE: Mechatronics Design Engineer
+BUSINESS UNIT: Mechatronics — Industrial Automation
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned mechatronics design engineer tasks with moderate supervision within Mechatronics — Industrial Automation, documents procedures, and supports troubleshooting within own work area."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 29
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Suzhou, China
+EMPLOYEE: Wen Jie (placeholder name, CN)
+ROLE: Automotive Quality Engineer
+BUSINESS UNIT: Integrated Manufacturing Services — Automotive
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned automotive quality engineer tasks with moderate supervision within Integrated Manufacturing Services — Automotive, documents procedures, and supports troubleshooting within own work area."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 31
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Johor, Malaysia
+EMPLOYEE: Aina (placeholder name, MY)
+ROLE: Injection Moulding Production Technician
+BUSINESS UNIT: Integrated Manufacturing Services — Plastics
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs injection moulding production technician duties under direct supervision within Integrated Manufacturing Services — Plastics, follows standard work instructions, and escalates deviations to the shift lead."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 33
+YEARS OF SERVICE: 0`;

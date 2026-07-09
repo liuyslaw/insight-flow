@@ -1,7 +1,7 @@
-// Generic placeholder training/development data — 56 course assignments
-// across 42 of the 50 sample employees (some have none, some have two),
-// mixed completion status, to demo the Training & Development view in
-// Talent Management. Not real client data.
+// Generic placeholder training/development data — 61 course assignments
+// across 47 of the 56 active sample employees (including the 6 new 2026
+// hires), mixed completion status and dates, to demo the Training Log view
+// in Talent Management. Not real client data.
 
 export const sampleTrainingDocs = `EMPLOYEE: Aisha (placeholder name, MY)
 COURSE: Six Sigma Green Belt
@@ -368,4 +368,36 @@ STATUS: In Progress
 
 EMPLOYEE: Le (placeholder name, EU)
 COURSE: IATF 16949 Automotive Quality Awareness
-STATUS: Not Started`;
+STATUS: Not Started
+
+---
+
+EMPLOYEE: Rachel (placeholder name, SG)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Completed
+COMPLETION DATE: February 2026
+
+---
+
+EMPLOYEE: Faizal (placeholder name, SG)
+COURSE: Data Protection & GDPR Basics
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Melissa (placeholder name, MY)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Not Started
+
+---
+
+EMPLOYEE: Pieter (placeholder name, EU)
+COURSE: Advanced Mechatronics Design
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Wen Jie (placeholder name, CN)
+COURSE: IATF 16949 Automotive Quality Awareness
+STATUS: Completed
+COMPLETION DATE: May 2026`;

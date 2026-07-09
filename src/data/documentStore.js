@@ -8,7 +8,7 @@ import { policies as defaultPolicies } from './policies.js'
 import { sampleTalentDocs } from './sampleTalentDocs.js'
 import { sampleTrainingDocs } from './sampleTrainingDocs.js'
 
-const STORAGE_KEY = 'insightflow_docs_v8'
+const STORAGE_KEY = 'insightflow_docs_v9'
 
 const sampleOnboardingTemplates = [
   {
