@@ -3,11 +3,15 @@
 // 50 core employees, each with TWO appraisal cycle records (2025, 2026) —
 // same person, role, site, level; rating/narrative/age/tenure vary by year.
 // Plus 10 leaver records (5 exited 2025, 5 exited 2026) for attrition, and
-// 6 new-hire records that exist ONLY in 2026 (no 2025 history) — genuine
-// headcount growth between periods, not just a rating change, so switching
-// the period selector produces a real difference in the headcount charts.
-// 116 records total. Shaped around Frencken.s actual segments:
-// Mechatronics and Integrated Manufacturing Services.
+// 15 new-hire records that exist ONLY in 2026 (no 2025 history) — a
+// deliberate, drastic AI-driven semiconductor demand hiring surge, spread
+// across site/function/level/gender/age so every chart in Workforce
+// Insights and Talent Management shows real movement when the period
+// selector changes, not just the rating-based ones. All employee names
+// verified unique (no name+region collisions with existing records) after
+// catching and fixing 3 accidental collisions during generation.
+// 2025 headcount 50, 2026 headcount 65. 125 records total. Shaped around
+// Frencken.s actual segments: Mechatronics and Integrated Manufacturing Services.
 
 export const sampleTalentDocs = `SITE: Singapore HQ
 EMPLOYEE: Wei Lin (placeholder name, SG)
@@ -1781,32 +1785,96 @@ YEARS OF SERVICE: 7
 
 SITE: Singapore HQ
 EMPLOYEE: Rachel (placeholder name, SG)
-ROLE: Semiconductor Test Engineer
+ROLE: Cleanroom Production Technician
 BUSINESS UNIT: Mechatronics — Semiconductor
-ASSIGNED LEVEL: L3
-JOB DESCRIPTION EXCERPT: "Executes assigned semiconductor test engineer tasks with moderate supervision within Mechatronics — Semiconductor, documents procedures, and supports troubleshooting within own work area."
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
 APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
 GENDER: Female
-AGE: 23
+AGE: 22
 YEARS OF SERVICE: 0
 
 ---
 
 SITE: Singapore HQ
 EMPLOYEE: Faizal (placeholder name, SG)
-ROLE: Program Coordinator
-BUSINESS UNIT: Group Corporate
+ROLE: Cleanroom Production Technician
+BUSINESS UNIT: Mechatronics — Semiconductor
 ASSIGNED LEVEL: L2
-JOB DESCRIPTION EXCERPT: "Performs program coordinator duties under direct supervision within Group Corporate, follows standard work instructions, and escalates deviations to the shift lead."
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
 APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
 GENDER: Male
-AGE: 25
+AGE: 24
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Singapore HQ
+EMPLOYEE: Charlotte (placeholder name, SG)
+ROLE: Semiconductor Process Engineer
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned semiconductor process engineer tasks with moderate supervision within Mechatronics — Semiconductor, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 27
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Singapore HQ
+EMPLOYEE: Zhi Wei (placeholder name, SG)
+ROLE: Manufacturing Supervisor
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L4
+JOB DESCRIPTION EXCERPT: "Leads manufacturing supervisor initiatives independently within Mechatronics — Semiconductor, owns a defined workstream, mentors junior staff. New supervisory role created to lead an additional production line added in 2026 to meet AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 4 / 5 (Exceeds Expectations)
+APPRAISAL NARRATIVE: "Brought in to lead the new production line — strong start standing up the team, full-year assessment expected in the 2027 cycle."
+STATUS: Active
+GENDER: Male
+AGE: 34
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Singapore HQ
+EMPLOYEE: Nadia (placeholder name, SG)
+ROLE: EHS Officer, Manufacturing
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned ehs officer, manufacturing tasks with moderate supervision within Mechatronics — Semiconductor, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 29
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Penang, Malaysia
+EMPLOYEE: Iskandar (placeholder name, MY)
+ROLE: Cleanroom Production Technician
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 23
 YEARS OF SERVICE: 0
 
 ---
@@ -1816,13 +1884,109 @@ EMPLOYEE: Melissa (placeholder name, MY)
 ROLE: Cleanroom Production Technician
 BUSINESS UNIT: Mechatronics — Semiconductor
 ASSIGNED LEVEL: L2
-JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead."
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
 APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
 GENDER: Female
-AGE: 27
+AGE: 21
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Penang, Malaysia
+EMPLOYEE: Suzana (placeholder name, MY)
+ROLE: Supply Chain Planner, Semiconductor
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned supply chain planner, semiconductor tasks with moderate supervision within Mechatronics — Semiconductor, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 28
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Suzhou, China
+EMPLOYEE: Jun Hao (placeholder name, CN)
+ROLE: Cleanroom Production Technician
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 25
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Suzhou, China
+EMPLOYEE: Xiao Yan (placeholder name, CN)
+ROLE: Cleanroom Production Technician
+BUSINESS UNIT: Mechatronics — Semiconductor
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs cleanroom production technician duties under direct supervision within Mechatronics — Semiconductor, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 23
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Suzhou, China
+EMPLOYEE: Wen Jie (placeholder name, CN)
+ROLE: Test Engineer, Industrial Automation
+BUSINESS UNIT: Mechatronics — Industrial Automation
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned test engineer, industrial automation tasks with moderate supervision within Mechatronics — Industrial Automation, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 26
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Suzhou, China
+EMPLOYEE: Li Na (placeholder name, CN)
+ROLE: Medical Device Quality Engineer
+BUSINESS UNIT: Mechatronics — Medical
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned medical device quality engineer tasks with moderate supervision within Mechatronics — Medical, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Female
+AGE: 30
+YEARS OF SERVICE: 0
+
+---
+
+SITE: Johor, Malaysia
+EMPLOYEE: Aiman (placeholder name, MY)
+ROLE: Injection Moulding Production Technician
+BUSINESS UNIT: Integrated Manufacturing Services — Plastics
+ASSIGNED LEVEL: L2
+JOB DESCRIPTION EXCERPT: "Performs injection moulding production technician duties under direct supervision within Integrated Manufacturing Services — Plastics, follows standard work instructions, and escalates deviations to the shift lead. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
+APPRAISAL CYCLE: 2026
+APPRAISAL RATING: 3 / 5 (Meets Expectations)
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
+STATUS: Active
+GENDER: Male
+AGE: 24
 YEARS OF SERVICE: 0
 
 ---
@@ -1832,26 +1996,10 @@ EMPLOYEE: Pieter (placeholder name, EU)
 ROLE: Mechatronics Design Engineer
 BUSINESS UNIT: Mechatronics — Industrial Automation
 ASSIGNED LEVEL: L3
-JOB DESCRIPTION EXCERPT: "Executes assigned mechatronics design engineer tasks with moderate supervision within Mechatronics — Industrial Automation, documents procedures, and supports troubleshooting within own work area."
+JOB DESCRIPTION EXCERPT: "Executes assigned mechatronics design engineer tasks with moderate supervision within Mechatronics — Industrial Automation, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
 APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
-STATUS: Active
-GENDER: Male
-AGE: 29
-YEARS OF SERVICE: 0
-
----
-
-SITE: Suzhou, China
-EMPLOYEE: Wen Jie (placeholder name, CN)
-ROLE: Automotive Quality Engineer
-BUSINESS UNIT: Integrated Manufacturing Services — Automotive
-ASSIGNED LEVEL: L3
-JOB DESCRIPTION EXCERPT: "Executes assigned automotive quality engineer tasks with moderate supervision within Integrated Manufacturing Services — Automotive, documents procedures, and supports troubleshooting within own work area."
-APPRAISAL CYCLE: 2026
-APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
 GENDER: Female
 AGE: 31
@@ -1859,15 +2007,15 @@ YEARS OF SERVICE: 0
 
 ---
 
-SITE: Johor, Malaysia
-EMPLOYEE: Aina (placeholder name, MY)
-ROLE: Injection Moulding Production Technician
-BUSINESS UNIT: Integrated Manufacturing Services — Plastics
-ASSIGNED LEVEL: L2
-JOB DESCRIPTION EXCERPT: "Performs injection moulding production technician duties under direct supervision within Integrated Manufacturing Services — Plastics, follows standard work instructions, and escalates deviations to the shift lead."
+SITE: Eindhoven, Netherlands
+EMPLOYEE: Lukas (placeholder name, EU)
+ROLE: Mechatronics Design Engineer
+BUSINESS UNIT: Mechatronics — Industrial Automation
+ASSIGNED LEVEL: L3
+JOB DESCRIPTION EXCERPT: "Executes assigned mechatronics design engineer tasks with moderate supervision within Mechatronics — Industrial Automation, documents procedures, and supports troubleshooting within own work area. Role added as part of the 2026 capacity ramp-up driven by rising AI-related semiconductor demand."
 APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "New joiner in 2026 — too early in the cycle for a full assessment; interim check-in scheduled."
+APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
 GENDER: Male
 AGE: 33

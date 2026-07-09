@@ -1,7 +1,7 @@
-// Generic placeholder training/development data — 61 course assignments
-// across 47 of the 56 active sample employees (including the 6 new 2026
-// hires), mixed completion status and dates, to demo the Training Log view
-// in Talent Management. Not real client data.
+// Generic placeholder training/development data — 72 course assignments
+// across the 65 active 2026 sample employees, including onboarding-stage
+// training for the 15 new AI-boom hires (mostly mandatory Day-1 safety,
+// role-specific courses still In Progress/Not Started). Not real client data.
 
 export const sampleTrainingDocs = `EMPLOYEE: Aisha (placeholder name, MY)
 COURSE: Six Sigma Green Belt
@@ -375,18 +375,88 @@ STATUS: Not Started
 EMPLOYEE: Rachel (placeholder name, SG)
 COURSE: Semiconductor Cleanroom Safety
 STATUS: Completed
-COMPLETION DATE: February 2026
+COMPLETION DATE: January 2026
 
 ---
 
 EMPLOYEE: Faizal (placeholder name, SG)
-COURSE: Data Protection & GDPR Basics
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Completed
+COMPLETION DATE: January 2026
+
+---
+
+EMPLOYEE: Charlotte (placeholder name, SG)
+COURSE: Semiconductor Cleanroom Safety
 STATUS: In Progress
+
+---
+
+EMPLOYEE: Charlotte (placeholder name, SG)
+COURSE: Six Sigma Green Belt
+STATUS: Not Started
+
+---
+
+EMPLOYEE: Zhi Wei (placeholder name, SG)
+COURSE: Leadership Fundamentals for New Managers
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Nadia (placeholder name, SG)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Completed
+COMPLETION DATE: February 2026
+
+---
+
+EMPLOYEE: Iskandar (placeholder name, MY)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Completed
+COMPLETION DATE: February 2026
 
 ---
 
 EMPLOYEE: Melissa (placeholder name, MY)
 COURSE: Semiconductor Cleanroom Safety
+STATUS: Not Started
+
+---
+
+EMPLOYEE: Suzana (placeholder name, MY)
+COURSE: Supply Chain Risk Management
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Jun Hao (placeholder name, CN)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: Completed
+COMPLETION DATE: March 2026
+
+---
+
+EMPLOYEE: Xiao Yan (placeholder name, CN)
+COURSE: Semiconductor Cleanroom Safety
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Wen Jie (placeholder name, CN)
+COURSE: Advanced Mechatronics Design
+STATUS: Not Started
+
+---
+
+EMPLOYEE: Li Na (placeholder name, CN)
+COURSE: IATF 16949 Automotive Quality Awareness
+STATUS: In Progress
+
+---
+
+EMPLOYEE: Aiman (placeholder name, MY)
+COURSE: IATF 16949 Automotive Quality Awareness
 STATUS: Not Started
 
 ---
@@ -397,7 +467,6 @@ STATUS: In Progress
 
 ---
 
-EMPLOYEE: Wen Jie (placeholder name, CN)
-COURSE: IATF 16949 Automotive Quality Awareness
-STATUS: Completed
-COMPLETION DATE: May 2026`;
+EMPLOYEE: Lukas (placeholder name, EU)
+COURSE: Data Protection & GDPR Basics
+STATUS: Not Started`;
