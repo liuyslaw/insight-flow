@@ -6,8 +6,9 @@
 
 import { policies as defaultPolicies } from './policies.js'
 import { sampleTalentDocs } from './sampleTalentDocs.js'
+import { sampleTrainingDocs } from './sampleTrainingDocs.js'
 
-const STORAGE_KEY = 'insightflow_docs_v7'
+const STORAGE_KEY = 'insightflow_docs_v8'
 
 const sampleOnboardingTemplates = [
   {
@@ -50,6 +51,14 @@ function seedDocs() {
       source: 'Sample data',
       addedAt: new Date().toISOString(),
     })),
+    {
+      id: 'seed-training-sample',
+      title: 'Sample training & certification records — 56 assignments',
+      type: 'training',
+      body: sampleTrainingDocs,
+      source: 'Sample data',
+      addedAt: new Date().toISOString(),
+    },
   ]
 }
 
