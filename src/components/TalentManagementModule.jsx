@@ -5,6 +5,7 @@ import { parseTalentRecords, countBy } from '../lib/parseTalentDocs.js'
 import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import AppraisalChart from './AppraisalChart.jsx'
+import PeriodRangeSelector from './PeriodRangeSelector.jsx'
 
 const severityColor = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--text3)' }
 const severityBg = { high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06)', low: 'rgba(255,255,255,0.03)' }
@@ -13,7 +14,8 @@ const flagIcon = { 'Level/JD mismatch': ShieldAlert, 'Rating/narrative mismatch'
 
 export default function TalentManagementModule() {
   const [talentDocs, setTalentDocs] = useState([])
-  const [cycle, setCycle] = useState(null)
+  const [startPeriod, setStartPeriod] = useState({ month: 0, year: 2025 })
+  const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [loading, setLoading] = useState(false)
@@ -29,15 +31,24 @@ export default function TalentManagementModule() {
   )
 
   const cycles = useMemo(
-    () => [...new Set(allRecords.map((r) => r.appraisalCycle))].filter(Boolean).sort((a, b) => b - a),
+    () => [...new Set(allRecords.map((r) => r.appraisalCycle))].filter(Boolean).sort((a, b) => a - b),
     [allRecords]
   )
-  useEffect(() => { if (cycles.length && cycle == null) setCycle(cycles[0]) }, [cycles, cycle])
+
+  // Clamp the range to years that actually exist in the data
+  const rangeStartYear = Math.min(startPeriod.year, endPeriod.year)
+  const rangeEndYear = Math.max(startPeriod.year, endPeriod.year)
 
   const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
+  // Records within the selected range — used for the year-on-year chart
+  const rangeActiveRecords = useMemo(
+    () => allActiveRecords.filter((r) => r.appraisalCycle >= rangeStartYear && r.appraisalCycle <= rangeEndYear),
+    [allActiveRecords, rangeStartYear, rangeEndYear]
+  )
+  // Snapshot cycle = the "To" period's year — drives everything except the YoY chart
   const cycleRecords = useMemo(
-    () => allActiveRecords.filter((r) => cycle == null || r.appraisalCycle === cycle),
-    [allActiveRecords, cycle]
+    () => allActiveRecords.filter((r) => r.appraisalCycle === rangeEndYear),
+    [allActiveRecords, rangeEndYear]
   )
 
   const siteOptions = useMemo(() => countBy(cycleRecords, 'site').map((c) => c.name), [cycleRecords])
@@ -53,11 +64,12 @@ export default function TalentManagementModule() {
     [records]
   )
 
+  const periodLabel = rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
   const filterLabel = [
-    cycle ? `Cycle ${cycle}` : null,
+    periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
     functionFilter !== 'all' ? functionFilter : null,
-  ].filter(Boolean).join(' · ') || 'All records'
+  ].filter(Boolean).join(' · ')
 
   async function analyze() {
     const combined = records.map((r) => r.raw).join('\n\n---\n\n')
@@ -120,14 +132,20 @@ export default function TalentManagementModule() {
         </button>
       </div>
 
+      {/* Period */}
+      <div style={{ marginBottom: 14 }}>
+        <PeriodRangeSelector
+          years={cycles.length ? cycles : [2025, 2026]}
+          start={startPeriod}
+          end={endPeriod}
+          onChangeStart={setStartPeriod}
+          onChangeEnd={setEndPeriod}
+          accentColor="var(--magenta)"
+        />
+      </div>
+
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <select value={cycle ?? ''} onChange={(e) => setCycle(Number(e.target.value))} style={{
-          background: 'var(--card)', border: '1px solid rgba(184,68,128,0.35)', borderRadius: 8,
-          padding: '8px 12px', fontSize: 12.5, color: 'var(--magenta)', fontWeight: 500,
-        }}>
-          {cycles.map((c) => <option key={c} value={c}>Cycle {c}</option>)}
-        </select>
         <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} style={{
           background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
           padding: '8px 12px', fontSize: 12.5, color: 'var(--text)',
@@ -158,7 +176,7 @@ export default function TalentManagementModule() {
         )}
       </div>
 
-      <AppraisalChart records={records} allActiveRecords={allActiveRecords} />
+      <AppraisalChart records={records} allActiveRecords={rangeActiveRecords} />
 
       {/* Promotion & succession candidates */}
       {records.length > 0 && (
