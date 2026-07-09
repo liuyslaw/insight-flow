@@ -40,6 +40,8 @@ export default function TalentManagementModule() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
   const [movementDrill, setMovementDrill] = useState(null)
+  const [courseFilter, setCourseFilter] = useState(null)
+  const [statusFilter, setStatusFilter] = useState(null)
   const [talentSummary, setTalentSummary] = useState(null)
   const [loadingTalentSummary, setLoadingTalentSummary] = useState(false)
   const [talentSummaryError, setTalentSummaryError] = useState(null)
@@ -111,6 +113,13 @@ export default function TalentManagementModule() {
   const trainingStatusData = countByStatus(relevantTraining)
   const trainingByCourse = countByCourse(relevantTraining)
   const employeesWithTraining = new Set(relevantTraining.map((t) => t.employee)).size
+
+  const statusOrder = { Completed: 0, 'In Progress': 1, 'Not Started': 2 }
+  const filteredTrainingLog = useMemo(() => relevantTraining
+    .filter((t) => !courseFilter || t.course === courseFilter)
+    .filter((t) => !statusFilter || t.status === statusFilter)
+    .sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.employee.localeCompare(b.employee)),
+  [relevantTraining, courseFilter, statusFilter])
 
   function handleStartChange(next) {
     setStartPeriod(next)
@@ -355,31 +364,65 @@ export default function TalentManagementModule() {
               <p style={{ fontSize: 11.5, color: 'var(--text3)', marginBottom: 12 }}>
                 {employeesWithTraining} of {records.length} employees in this selection have at least one training assignment.
               </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
                 <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>Completion Status</div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>Completion Status — click to filter log</div>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={trainingStatusData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                       <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
                       <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
                       <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {trainingStatusData.map((entry, i) => <Cell key={i} fill={statusColors[entry.name]} />)}
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(d) => setStatusFilter(statusFilter === d.name ? null : d.name)}>
+                        {trainingStatusData.map((entry, i) => (
+                          <Cell key={i} fill={statusColors[entry.name]} opacity={statusFilter && statusFilter !== entry.name ? 0.35 : 1} />
+                        ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
                 <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 12 }}>By Course</div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 12 }}>By Course — click to filter log</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {trainingByCourse.map((c) => (
-                      <div key={c.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                      <button key={c.name} onClick={() => setCourseFilter(courseFilter === c.name ? null : c.name)} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12,
+                        background: courseFilter === c.name ? 'rgba(245,158,11,0.1)' : 'none', borderRadius: 6, padding: '4px 6px',
+                        textAlign: 'left', opacity: courseFilter && courseFilter !== c.name ? 0.5 : 1,
+                      }}>
                         <span style={{ color: 'var(--text2)' }}>{c.name}</span>
                         <span className="chip">{c.value}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Training Log — who attended what, and when */}
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
+                    Training Log — {filteredTrainingLog.length} record{filteredTrainingLog.length === 1 ? '' : 's'}
+                  </span>
+                  {(courseFilter || statusFilter) && (
+                    <button onClick={() => { setCourseFilter(null); setStatusFilter(null) }} style={{ background: 'none', fontSize: 11, color: 'var(--text3)' }}>
+                      Clear filter
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 280, overflowY: 'auto' }}>
+                  {filteredTrainingLog.map((t, i) => (
+                    <div key={i} style={{
+                      display: 'grid', gridTemplateColumns: '1.3fr 1.6fr 0.8fr 0.9fr', gap: 10, alignItems: 'center',
+                      padding: '7px 10px', borderRadius: 6, fontSize: 11.5,
+                      background: i % 2 === 0 ? 'var(--bg2)' : 'transparent',
+                    }}>
+                      <span style={{ color: 'var(--text)' }}>{t.employee}</span>
+                      <span style={{ color: 'var(--text2)' }}>{t.course}</span>
+                      <span className="chip" style={{ color: statusColors[t.status], borderColor: `${statusColors[t.status]}55`, width: 'fit-content' }}>{t.status}</span>
+                      <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 10.5 }}>{t.completionDate || '—'}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>
