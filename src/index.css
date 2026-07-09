@@ -66,6 +66,16 @@ a { text-decoration: none; color: inherit; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media print {
+  :root {
+    --text: #111113;
+    --text2: #333338;
+    --text3: #52525b;
+    --border: #cccccc;
+    --card: #ffffff;
+    --card2: #f4f4f5;
+    --bg: #ffffff;
+    --bg2: #ffffff;
+  }
   aside, header, .no-print { display: none !important; }
   html, body, #root { background: #ffffff !important; color: #111113 !important; height: auto !important; }
   main { overflow: visible !important; padding: 0 !important; }
