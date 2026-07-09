@@ -107,6 +107,31 @@ export function countByTenureBucket(records) {
 }
 
 /**
+ * Talent Movement — compares each currently-active employee's rating this
+ * cycle vs. the immediately prior cycle to classify direction of travel,
+ * rather than judging on a single static threshold.
+ * Matches employees across cycles by the EMPLOYEE field text, since that's
+ * the only stable identity we carry today (no employee ID field yet).
+ */
+export function computeTalentMovement(allActiveRecords, currentYear, previousYear) {
+  const current = allActiveRecords.filter((r) => r.appraisalCycle === currentYear)
+  const previous = allActiveRecords.filter((r) => r.appraisalCycle === previousYear)
+  const prevByEmployee = new Map(previous.filter((r) => r.employee).map((r) => [r.employee, r]))
+
+  return current.map((r) => {
+    const prev = r.employee ? prevByEmployee.get(r.employee) : null
+    if (!prev || prev.rating == null || r.rating == null) {
+      return { ...r, previousRating: null, delta: null, category: 'No prior data' }
+    }
+    const delta = r.rating - prev.rating
+    let category
+    if (delta > 0 && r.rating >= 4) category = 'Rising'
+    else if (delta < 0) category = 'Needs Attention'
+    else category = 'Steady'
+    return { ...r, previousRating: prev.rating, delta, category }
+  })
+}
+/**
  * Attrition rate for a given cycle, defined here as:
  *   leavers in that cycle ÷ (active + leavers in that cycle) × 100
  * A simplified proxy suitable for a phase-1 demo — not official HR
