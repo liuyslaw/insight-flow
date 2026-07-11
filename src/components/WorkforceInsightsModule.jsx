@@ -22,13 +22,21 @@ const tooltipStyle = {
 }
 const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
 
-function ChartCard({ title, children }) {
+function ChartCard({ title, total, totalLabel, children }) {
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
       padding: '16px 18px', flex: '1 1 320px', minWidth: 280,
     }}>
-      <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>{title}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>{title}</div>
+        {(total != null || totalLabel) && (
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--text)', background: 'var(--card2)',
+            border: '1px solid var(--border)', borderRadius: 5, padding: '2px 8px',
+          }}>{totalLabel || `${total} total`}</span>
+        )}
+      </div>
       {children}
     </div>
   )
@@ -402,7 +410,7 @@ export default function WorkforceInsightsModule() {
 
           {show('quarterlyTrend') && quarterlyTrend.length > 0 && (
             <div style={{ marginBottom: 18 }}>
-              <ChartCard title={`Headcount Trend by Quarter — ${rangeEndYear}`}>
+              <ChartCard title={`Headcount Trend by Quarter — ${rangeEndYear}`} totalLabel={quarterlyTrend[quarterlyTrend.length - 1]?.headcount != null ? `${quarterlyTrend[quarterlyTrend.length - 1].headcount} by year-end` : null}>
                 <ResponsiveContainer width="100%" height={220}>
                   <ComposedChart data={quarterlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -429,7 +437,7 @@ export default function WorkforceInsightsModule() {
           {(show('level') || show('site') || show('function')) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
               {show('level') && (
-                <ChartCard title="Headcount by Job Level">
+                <ChartCard title="Headcount by Job Level" total={records.length}>
                   <ResponsiveContainer width="100%" height={180}>
                     <BarChart data={byLevel}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -442,7 +450,7 @@ export default function WorkforceInsightsModule() {
                 </ChartCard>
               )}
               {show('site') && (
-                <ChartCard title="Headcount by Site">
+                <ChartCard title="Headcount by Site" total={records.length}>
                   <ResponsiveContainer width="100%" height={Math.max(180, bySite.length * 34)}>
                     <BarChart data={bySite} layout="vertical" margin={{ left: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
@@ -455,7 +463,7 @@ export default function WorkforceInsightsModule() {
                 </ChartCard>
               )}
               {show('function') && (
-                <ChartCard title="Headcount by Function">
+                <ChartCard title="Headcount by Function" total={records.length}>
                   <ResponsiveContainer width="100%" height={Math.max(180, byFunction.length * 30)}>
                     <BarChart data={byFunction} layout="vertical" margin={{ left: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
@@ -473,7 +481,7 @@ export default function WorkforceInsightsModule() {
           {withDemo.length > 0 && (show('age') || show('gender') || show('tenure')) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: drill ? 14 : 0 }}>
               {show('age') && (
-                <ChartCard title="Age Distribution">
+                <ChartCard title="Age Distribution" total={ageData.reduce((s, d) => s + d.value, 0)}>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={ageData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -486,7 +494,7 @@ export default function WorkforceInsightsModule() {
                 </ChartCard>
               )}
               {show('gender') && (
-                <ChartCard title="Gender Mix">
+                <ChartCard title="Gender Mix" total={genderData.reduce((s, d) => s + d.value, 0)}>
                   <ResponsiveContainer width="100%" height={200}>
                     <PieChart>
                       <Pie data={genderData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={3} cursor="pointer" onClick={(d) => drillGender(d.name)}>
@@ -499,7 +507,7 @@ export default function WorkforceInsightsModule() {
                 </ChartCard>
               )}
               {show('tenure') && (
-                <ChartCard title="Years of Service">
+                <ChartCard title="Years of Service" total={tenureData.reduce((s, d) => s + d.value, 0)}>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={tenureData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />

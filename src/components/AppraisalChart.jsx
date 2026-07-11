@@ -4,13 +4,21 @@ import { BarChart3, X, Users } from 'lucide-react'
 
 const ratingColors = { 1: '#ef4444', 2: '#ef4444', 3: '#a1a1aa', 4: '#22c55e', 5: '#22c55e' }
 
-function ChartCard({ title, children }) {
+function ChartCard({ title, total, children }) {
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
       padding: '16px 18px', flex: '1 1 320px', minWidth: 280,
     }}>
-      <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>{title}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>{title}</div>
+        {total != null && (
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: 'var(--text)', background: 'var(--card2)',
+            border: '1px solid var(--border)', borderRadius: 5, padding: '2px 8px',
+          }}>{total} total</span>
+        )}
+      </div>
       {children}
     </div>
   )
@@ -57,7 +65,7 @@ export default function AppraisalChart({ records, allActiveRecords }) {
       <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 12 }}>Click a bar to see who's behind the number.</p>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: drill ? 14 : 0 }}>
-        <ChartCard title="Appraisal Rating Distribution — Selected Cycle">
+        <ChartCard title="Appraisal Rating Distribution — Selected Cycle" total={records.length}>
           <ResponsiveContainer width="100%" height={190}>
             <BarChart data={ratingCounts}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
