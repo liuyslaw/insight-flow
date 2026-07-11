@@ -17,7 +17,7 @@ export async function buildOfferLetterDocx(letterText, candidateName) {
   const a = document.createElement('a')
   a.href = url
   const safeName = (candidateName || 'candidate').replace(/[^a-z0-9]+/gi, '-').toLowerCase()
-  a.download = `InsightFlow-Offer-Letter-${safeName}.docx`
+  a.download = `HRinsight-Offer-Letter-${safeName}.docx`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

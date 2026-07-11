@@ -40,6 +40,7 @@ export function parseTalentRecords(text) {
     const appraisalCycle = block.match(/APPRAISAL CYCLE:\s*(\d{4})/i)?.[1]
     const status = block.match(/STATUS:\s*(Active|Left)/i)?.[1]
     const exitDate = block.match(/EXIT DATE:\s*(.+)/i)?.[1]?.trim()
+    const hireDate = block.match(/HIRE DATE:\s*(.+)/i)?.[1]?.trim()
 
     if (!site && !role && !level && !rating) continue
 
@@ -57,6 +58,7 @@ export function parseTalentRecords(text) {
       appraisalCycle: appraisalCycle ? Number(appraisalCycle) : null,
       status: status || 'Active',
       exitDate: exitDate || null,
+      hireDate: hireDate || null,
       raw: block.trim(),
     })
   }
@@ -151,4 +153,57 @@ export function computeAttrition(records, cycle) {
     leavers,
     rate: total > 0 ? (leavers.length / total) * 100 : 0,
   }
+}
+
+const MONTH_TO_QUARTER = {
+  January: 1, February: 1, March: 1,
+  April: 2, May: 2, June: 2,
+  July: 3, August: 3, September: 3,
+  October: 4, November: 4, December: 4,
+}
+
+/**
+ * Extracts the quarter (1-4) from a "Month Year" string like "March 2026".
+ * Returns null if it can't be parsed — callers should treat that record as
+ * not quarter-attributable rather than guessing.
+ */
+export function getQuarter(monthYearStr) {
+  if (!monthYearStr) return null
+  const month = monthYearStr.trim().split(/\s+/)[0]
+  return MONTH_TO_QUARTER[month] || null
+}
+
+/**
+ * Quarterly headcount trend for a given year — additions (from HIRE DATE)
+ * and departures (from EXIT DATE) bucketed by quarter, plus a running
+ * cumulative headcount starting from the prior year's active baseline.
+ *
+ * Departures are tracked as a separate signal, not subtracted from the
+ * cumulative headcount line: leavers in this dataset are modelled as people
+ * outside the persistent active population (see sampleTalentDocs.js), so
+ * netting them against the headcount line would understate the actual
+ * "active as of this cycle" figure shown elsewhere in the app. Showing both
+ * series side by side (bars for departures, line for headcount) keeps both
+ * honest without one silently distorting the other.
+ */
+export function computeQuarterlyTrend(allRecords, year, baselineHeadcount) {
+  const added = { 1: 0, 2: 0, 3: 0, 4: 0 }
+  const dropped = { 1: 0, 2: 0, 3: 0, 4: 0 }
+
+  allRecords.forEach((r) => {
+    if (r.status === 'Active' && r.hireDate) {
+      const q = getQuarter(r.hireDate)
+      if (q && r.appraisalCycle === year) added[q] += 1
+    }
+    if (r.status === 'Left' && r.exitDate && r.appraisalCycle === year) {
+      const q = getQuarter(r.exitDate)
+      if (q) dropped[q] += 1
+    }
+  })
+
+  let running = baselineHeadcount
+  return [1, 2, 3, 4].map((q) => {
+    running += added[q]
+    return { quarter: `Q${q}`, added: added[q], dropped: dropped[q], headcount: running }
+  })
 }

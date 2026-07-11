@@ -3,7 +3,7 @@
 // special treatment — rows are mapped to the SITE/ROLE/ASSIGNED LEVEL/
 // APPRAISAL RATING block format the rest of the app already expects,
 // tolerant of common header name variants since real exports won't always
-// use InsightFlow's exact field names.
+// use HRinsight's exact field names.
 
 import mammoth from 'mammoth'
 import * as XLSX from 'xlsx'
