@@ -1,4 +1,4 @@
-# InsightFlow
+# HRinsight
 
 HR intelligence layer for the Frencken / Theo van de Pol pitch (09 July 2026).
 
@@ -10,7 +10,7 @@ One shared document intake, two modules that read from it:
 2. **Talent Management** — reads the talent-tagged documents and flags job level/JD mismatches, appraisal rating/narrative gaps, and cross-site calibration variance, with a leadership-ready summary.
 3. **Admin Services** — reads the policy-tagged documents and answers employee questions from them directly, live.
 
-**Phase 1 scope, deliberately:** no connection to any live HR or payroll system. Frencken would manually upload documents into the Document tab. See `projects/InsightFlow-context.md` for the reasoning.
+**Phase 1 scope, deliberately:** no connection to any live HR or payroll system. Frencken would manually upload documents into the Document tab. See `projects/HRinsight-context.md` for the reasoning.
 
 Runs on the **Groq API** (`llama-3.3-70b-versatile`) for this demo. Both `/api/analyze` and `/api/assistant` calls happen server-side in Vercel functions — the key is never sent to the browser.
 
