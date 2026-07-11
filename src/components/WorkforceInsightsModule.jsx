@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, PieChart, Pie, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
 import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2, TrendingDown, TrendingUp, Printer, SlidersHorizontal, Check } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, computeAttrition, computeQuarterlyTrend } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, computeAttrition, computeQuarterlyTrend, isActiveAsOfPeriod } from '../lib/parseTalentDocs.js'
 import { buildWorkforceReportDocx } from '../lib/buildWorkforceReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import PeriodRangeSelector from './PeriodRangeSelector.jsx'
@@ -108,8 +108,8 @@ function ChartPicker({ selected, onToggle }) {
 
 export default function WorkforceInsightsModule() {
   const [talentDocs, setTalentDocs] = useState([])
-  const [startPeriod, setStartPeriod] = useState({ month: 11, year: 2026 })
-  const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
+  const [startPeriod, setStartPeriod] = useState({ period: 'FY', year: 2026 })
+  const [endPeriod, setEndPeriod] = useState({ period: 'FY', year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [visibleCharts, setVisibleCharts] = useState(CHART_OPTIONS.map((c) => c.id))
@@ -131,20 +131,30 @@ export default function WorkforceInsightsModule() {
     [allRecords]
   )
 
+  const PERIOD_RANK = { Q1: 1, Q2: 2, Q3: 3, Q4: 4, FY: 4 }
+  const periodOrderOf = (v) => v.year * 10 + PERIOD_RANK[v.period]
+
   // From/To are honored directly — no min/max swapping, which previously
   // caused the snapshot to silently ignore whichever box was just changed.
   const rangeStartYear = startPeriod.year
   const rangeEndYear = endPeriod.year
-  const invalidRange = rangeStartYear > rangeEndYear
+  const rangeEndRank = PERIOD_RANK[endPeriod.period]
+  const invalidRange = periodOrderOf(startPeriod) > periodOrderOf(endPeriod)
   const cycleRangeYears = useMemo(
     () => cycles.filter((c) => c >= rangeStartYear && c <= rangeEndYear),
     [cycles, rangeStartYear, rangeEndYear]
   )
+  // Which years actually have quarter-level hire data (2026 does; 2025 doesn't)
+  const quarterDataYears = useMemo(
+    () => [...new Set(allRecords.filter((r) => r.hireDate).map((r) => Number(r.hireDate.trim().split(/\s+/)[1])))],
+    [allRecords]
+  )
 
-  // Active workforce "as of" the range's end year = composition snapshot
+  // Active workforce "as of" the selected quarter — genuinely progressive
+  // for years with quarter-level hire data (see isActiveAsOfPeriod).
   const activeInCycle = useMemo(
-    () => allRecords.filter((r) => r.status === 'Active' && r.appraisalCycle === rangeEndYear),
-    [allRecords, rangeEndYear]
+    () => allRecords.filter((r) => isActiveAsOfPeriod(r, rangeEndYear, rangeEndRank)),
+    [allRecords, rangeEndYear, rangeEndRank]
   )
 
   const siteOptions = useMemo(() => countBy(activeInCycle, 'site').map((c) => c.name), [activeInCycle])
@@ -157,16 +167,17 @@ export default function WorkforceInsightsModule() {
 
   function handleStartChange(next) {
     setStartPeriod(next)
-    if (next.year > endPeriod.year) setEndPeriod(next)
+    if (periodOrderOf(next) > periodOrderOf(endPeriod)) setEndPeriod(next)
   }
   function handleEndChange(next) {
     setEndPeriod(next)
-    if (next.year < startPeriod.year) setStartPeriod(next)
+    if (periodOrderOf(next) < periodOrderOf(startPeriod)) setStartPeriod(next)
   }
 
+  const endLabel = endPeriod.period === 'FY' ? `FY${rangeEndYear}` : `${endPeriod.period} ${rangeEndYear}`
   const periodLabel = invalidRange
-    ? `Invalid range (From ${rangeStartYear} is after To ${rangeEndYear})`
-    : rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
+    ? `Invalid range (From is after To)`
+    : rangeStartYear === rangeEndYear ? endLabel : `${rangeStartYear}–${rangeEndYear} (as of ${endLabel})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
@@ -293,12 +304,13 @@ export default function WorkforceInsightsModule() {
           onChangeStart={handleStartChange}
           onChangeEnd={handleEndChange}
           accentColor="#fbbf24"
+          quarterDataYears={quarterDataYears}
         />
       </div>
 
       {invalidRange && (
         <div className="no-print" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--red)' }}>
-          "From" ({rangeStartYear}) is after "To" ({rangeEndYear}) — set "From" to the same year or earlier.
+          "From" is after "To" — set "From" to an earlier or equal period.
         </div>
       )}
 

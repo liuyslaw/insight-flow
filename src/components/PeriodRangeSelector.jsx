@@ -1,11 +1,14 @@
 import { Calendar } from 'lucide-react'
 
-const MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-]
+const PERIODS = ['Q1', 'Q2', 'Q3', 'Q4', 'FY']
+// FY (full year) ranks the same as Q4 — it represents the complete/year-end
+// state, consistent with how annual-only data has always been treated here.
+const PERIOD_RANK = { Q1: 1, Q2: 2, Q3: 3, Q4: 4, FY: 4 }
 
-// "Now" for YTD purposes — matches the app's current context.
-const TODAY = { month: 6, year: 2026 } // month is 0-indexed (June=5, July=6)
+// "Now" for YTD purposes — matches the app's current context (July 2026 = Q3).
+const TODAY = { period: 'Q3', year: 2026 }
+
+function periodOrder(v) { return v.year * 10 + PERIOD_RANK[v.period] }
 
 function Box({ label, value, years, onChange, accentColor, showYtd, onYtd }) {
   return (
@@ -17,11 +20,11 @@ function Box({ label, value, years, onChange, accentColor, showYtd, onYtd }) {
         {label}
       </span>
       <select
-        value={value.month}
-        onChange={(e) => onChange({ ...value, month: Number(e.target.value) })}
-        style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 5px', fontSize: 11.5, color: 'var(--text)' }}
+        value={value.period}
+        onChange={(e) => onChange({ ...value, period: e.target.value })}
+        style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 5, padding: '3px 5px', fontSize: 11.5, color: 'var(--text)', fontWeight: value.period === 'FY' ? 700 : 400 }}
       >
-        {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+        {PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}
       </select>
       <select
         value={value.year}
@@ -42,18 +45,21 @@ function Box({ label, value, years, onChange, accentColor, showYtd, onYtd }) {
 
 /**
  * years: available cycle years, e.g. [2025, 2026]
- * start/end: { month, year }
- * Note: the underlying sample data has annual (not monthly) appraisal cycles,
- * so month selection is UI-ready for finer-grained data but current filtering
- * resolves at the year level — stated in the caption below the control.
+ * start/end: { period: 'Q1'|'Q2'|'Q3'|'Q4'|'FY', year }
+ *
+ * Quarter selection is genuinely live where the data supports it: 2026 has
+ * real per-quarter hire dates, so composition charts actually grow through
+ * the year as you move the selector. 2025 only has annual data, so every
+ * quarter shows the same year-end figure — stated below, not hidden.
  */
-export default function PeriodRangeSelector({ years, start, end, onChangeStart, onChangeEnd, accentColor = 'var(--magenta)' }) {
+export default function PeriodRangeSelector({ years, start, end, onChangeStart, onChangeEnd, accentColor = 'var(--magenta)', quarterDataYears = [] }) {
   function setYtd() {
-    onChangeEnd({ month: TODAY.month, year: TODAY.year })
+    onChangeEnd({ period: TODAY.period, year: TODAY.year })
   }
 
-  const snapshotYear = Math.max(start.year, end.year)
-  const isRange = start.year !== end.year
+  const isRange = periodOrder(start) !== periodOrder(end)
+  const endLabel = end.period === 'FY' ? `FY${end.year}` : `${end.period} ${end.year}`
+  const hasQuarterData = quarterDataYears.includes(end.year)
 
   return (
     <div>
@@ -66,13 +72,15 @@ export default function PeriodRangeSelector({ years, start, end, onChangeStart, 
           fontSize: 10.5, fontWeight: 600, color: accentColor, background: `${accentColor}18`,
           border: `1px solid ${accentColor}40`, borderRadius: 6, padding: '4px 10px',
         }}>
-          Viewing: Cycle {snapshotYear}
+          Viewing: {endLabel}
         </span>
       </div>
       <p style={{ fontSize: 10, color: 'var(--text3)', marginTop: 5, marginBottom: 0 }}>
-        {isRange
-          ? `Charts show the "To" period (${snapshotYear}). Year-on-year comparisons use every cycle from "From" to "To".`
-          : 'Change "From" to an earlier year to also see year-on-year trend charts.'}
+        {!hasQuarterData
+          ? `${end.year} only has annual data — every quarter shows the same year-end snapshot. Select 2026 for live quarter-by-quarter change.`
+          : isRange
+            ? `Charts show the "To" period (${endLabel}). Year-on-year comparisons use every cycle from "From" to "To".`
+            : 'Headcount and composition update live as you change the quarter — try moving "To" between Q1 and Q4.'}
       </p>
     </div>
   )

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, Table2, ArrowUp, ArrowDown, Minus, GraduationCap, X } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countBy, computeTalentMovement } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, computeTalentMovement, isActiveAsOfPeriod } from '../lib/parseTalentDocs.js'
 import { parseTrainingRecords, countByStatus, countByCourse } from '../lib/parseTrainingDocs.js'
 import { buildTalentReportDocx } from '../lib/buildTalentReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
@@ -31,8 +31,8 @@ const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
 export default function TalentManagementModule() {
   const [talentDocs, setTalentDocs] = useState([])
   const [trainingDocs, setTrainingDocs] = useState([])
-  const [startPeriod, setStartPeriod] = useState({ month: 11, year: 2026 })
-  const [endPeriod, setEndPeriod] = useState({ month: 11, year: 2026 })
+  const [startPeriod, setStartPeriod] = useState({ period: 'FY', year: 2026 })
+  const [endPeriod, setEndPeriod] = useState({ period: 'FY', year: 2026 })
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [loading, setLoading] = useState(false)
@@ -65,11 +65,15 @@ export default function TalentManagementModule() {
     [allRecords]
   )
 
+  const PERIOD_RANK = { Q1: 1, Q2: 2, Q3: 3, Q4: 4, FY: 4 }
+  const periodOrderOf = (v) => v.year * 10 + PERIOD_RANK[v.period]
+
   // From/To are honored directly — no min/max swapping, which previously
   // caused the snapshot to silently ignore whichever box was just changed.
   const rangeStartYear = startPeriod.year
   const rangeEndYear = endPeriod.year
-  const invalidRange = rangeStartYear > rangeEndYear
+  const rangeEndRank = PERIOD_RANK[endPeriod.period]
+  const invalidRange = periodOrderOf(startPeriod) > periodOrderOf(endPeriod)
   const previousYear = rangeEndYear - 1
 
   const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
@@ -77,9 +81,16 @@ export default function TalentManagementModule() {
     () => allActiveRecords.filter((r) => r.appraisalCycle >= rangeStartYear && r.appraisalCycle <= rangeEndYear),
     [allActiveRecords, rangeStartYear, rangeEndYear]
   )
+  // Quarter-aware: new hires only count once the selected quarter reaches
+  // their actual hire quarter (see isActiveAsOfPeriod) — so this genuinely
+  // changes as you move the period selector, not just when the year changes.
   const cycleRecords = useMemo(
-    () => allActiveRecords.filter((r) => r.appraisalCycle === rangeEndYear),
-    [allActiveRecords, rangeEndYear]
+    () => allRecords.filter((r) => isActiveAsOfPeriod(r, rangeEndYear, rangeEndRank)),
+    [allRecords, rangeEndYear, rangeEndRank]
+  )
+  const quarterDataYears = useMemo(
+    () => [...new Set(allRecords.filter((r) => r.hireDate).map((r) => Number(r.hireDate.trim().split(/\s+/)[1])))],
+    [allRecords]
   )
 
   const siteOptions = useMemo(() => countBy(cycleRecords, 'site').map((c) => c.name), [cycleRecords])
@@ -123,16 +134,17 @@ export default function TalentManagementModule() {
 
   function handleStartChange(next) {
     setStartPeriod(next)
-    if (next.year > endPeriod.year) setEndPeriod(next)
+    if (periodOrderOf(next) > periodOrderOf(endPeriod)) setEndPeriod(next)
   }
   function handleEndChange(next) {
     setEndPeriod(next)
-    if (next.year < startPeriod.year) setStartPeriod(next)
+    if (periodOrderOf(next) < periodOrderOf(startPeriod)) setStartPeriod(next)
   }
 
+  const endLabel = endPeriod.period === 'FY' ? `FY${rangeEndYear}` : `${endPeriod.period} ${rangeEndYear}`
   const periodLabel = invalidRange
-    ? `Invalid range (From ${rangeStartYear} is after To ${rangeEndYear})`
-    : rangeStartYear === rangeEndYear ? `Cycle ${rangeEndYear}` : `${rangeStartYear}–${rangeEndYear} (as of ${rangeEndYear})`
+    ? `Invalid range (From is after To)`
+    : rangeStartYear === rangeEndYear ? endLabel : `${rangeStartYear}–${rangeEndYear} (as of ${endLabel})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
@@ -239,12 +251,13 @@ export default function TalentManagementModule() {
           onChangeStart={handleStartChange}
           onChangeEnd={handleEndChange}
           accentColor="var(--magenta)"
+          quarterDataYears={quarterDataYears}
         />
       </div>
 
       {invalidRange && (
         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--red)' }}>
-          "From" ({rangeStartYear}) is after "To" ({rangeEndYear}) — set "From" to the same year or earlier.
+          "From" is after "To" — set "From" to an earlier or equal period.
         </div>
       )}
 
