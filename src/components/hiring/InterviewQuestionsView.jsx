@@ -1,11 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sparkles, RefreshCw, AlertTriangle } from 'lucide-react'
+import { getUniqueRolesWithJD, formatRoleAsJD } from '../../lib/getUniqueRoles.js'
 
 export default function InterviewQuestionsView() {
+  const [existingRoles, setExistingRoles] = useState([])
+  const [roleSelection, setRoleSelection] = useState('')
   const [jdText, setJdText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+
+  useEffect(() => { setExistingRoles(getUniqueRolesWithJD()) }, [])
+
+  function handleRoleSelect(value) {
+    setRoleSelection(value)
+    if (value === '' || value === 'custom') return
+    const role = existingRoles[Number(value)]
+    if (role) setJdText(formatRoleAsJD(role))
+  }
 
   async function generate() {
     if (!jdText.trim()) return
@@ -33,10 +45,21 @@ export default function InterviewQuestionsView() {
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Job description
         </div>
+        <select
+          value={roleSelection}
+          onChange={(e) => handleRoleSelect(e.target.value)}
+          style={{ width: '100%', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 10 }}
+        >
+          <option value="">Select an existing role to prefill…</option>
+          {existingRoles.map((r, i) => (
+            <option key={i} value={i}>{r.role} — {r.level}{r.businessUnit ? ` — ${r.businessUnit}` : ''}</option>
+          ))}
+          <option value="custom">Paste a JD manually instead</option>
+        </select>
         <textarea
           value={jdText}
           onChange={(e) => setJdText(e.target.value)}
-          placeholder="Paste the job description here…"
+          placeholder="Paste the job description here, or select an existing role above…"
           style={{ width: '100%', height: 130, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, fontSize: 12.5, lineHeight: 1.6, color: 'var(--text)', resize: 'vertical', marginBottom: 12 }}
         />
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
