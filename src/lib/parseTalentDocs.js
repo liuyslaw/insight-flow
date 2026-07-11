@@ -174,6 +174,35 @@ export function getQuarter(monthYearStr) {
 }
 
 /**
+ * Whether a record counts as "active as of" a given quarter within a year —
+ * used to make the period selector genuinely quarter-aware instead of only
+ * resolving to whole-year snapshots. Core employees (no HIRE DATE — they
+ * pre-date the current cycle) are active all year. New hires only start
+ * counting once the selected quarter reaches their actual hire quarter, so
+ * headcount composition charts grow progressively through the year (e.g.
+ * 52 → 55 → 60 → 65) instead of jumping straight to the year-end figure
+ * regardless of which quarter is selected.
+ *
+ * Leavers are handled separately (via computeAttrition) and are never
+ * "Active" status, so they're correctly excluded from every quarter here
+ * without extra logic — they were never counted as active to begin with.
+ *
+ * periodRank: 1-4 for Q1-Q4, or 4 for "FY" (full year = same as Q4/year-end).
+ */
+export function isActiveAsOfPeriod(record, year, periodRank) {
+  if (record.status !== 'Active' || record.appraisalCycle !== year) return false
+  if (record.hireDate) {
+    const parts = record.hireDate.trim().split(/\s+/)
+    const hireYear = Number(parts[1])
+    if (hireYear === year) {
+      const hireQ = getQuarter(record.hireDate)
+      if (hireQ && periodRank < hireQ) return false
+    }
+  }
+  return true
+}
+
+/**
  * Quarterly headcount trend for a given year — additions (from HIRE DATE)
  * and departures (from EXIT DATE) bucketed by quarter, plus a running
  * cumulative headcount starting from the prior year's active baseline.
