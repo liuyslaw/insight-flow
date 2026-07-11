@@ -7,6 +7,10 @@
 
 import mammoth from 'mammoth'
 import * as XLSX from 'xlsx'
+import * as pdfjsLib from 'pdfjs-dist'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 const HEADER_MAP = {
   site: /^(site|location|office|plant)$/i,
@@ -86,12 +90,25 @@ async function importDocx(file) {
   return result.value
 }
 
+async function importPdf(file) {
+  const buffer = await file.arrayBuffer()
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
+  const pages = []
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i)
+    const content = await page.getTextContent()
+    pages.push(content.items.map((item) => item.str).join(' '))
+  }
+  return pages.join('\n\n')
+}
+
 export async function importFile(file, docType) {
   const name = file.name.toLowerCase()
   if (name.endsWith('.docx')) return importDocx(file)
+  if (name.endsWith('.pdf')) return importPdf(file)
   if (name.endsWith('.xlsx') || name.endsWith('.xls')) return importXlsx(file, docType)
   // .txt, .md, or anything else — read as plain text
   return file.text()
 }
 
-export const SUPPORTED_EXTENSIONS = '.txt,.md,.docx,.xlsx,.xls'
+export const SUPPORTED_EXTENSIONS = '.txt,.md,.docx,.xlsx,.xls,.pdf'
