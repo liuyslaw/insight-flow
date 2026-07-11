@@ -2,7 +2,7 @@
 // Env var required: GROQ_API_KEY (set in Vercel project settings, no VITE_ prefix).
 // Called server-side only — the key is never exposed to the browser.
 
-const SYSTEM_PROMPT = `You are InsightFlow's job architecture and appraisal consistency engine.
+const SYSTEM_PROMPT = `You are HRinsight's job architecture and appraisal consistency engine.
 
 You will receive a set of records exported from a job architecture / appraisal rollout. Each record
 contains a site, a role, an assigned job level, a job description excerpt, an appraisal rating, and

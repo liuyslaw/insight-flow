@@ -3,7 +3,7 @@
 // Called server-side only — the key is never exposed to the browser.
 
 function buildSystemPrompt() {
-  return `You are InsightFlow's onboarding planning engine. Given a new hire's role, level, and
+  return `You are HRinsight's onboarding planning engine. Given a new hire's role, level, and
 site, plus the organisation's onboarding templates and relevant policies, produce a tailored
 onboarding plan.
 

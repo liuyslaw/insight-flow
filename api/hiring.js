@@ -12,7 +12,7 @@
 // making every actual decision.
 
 const PROMPTS = {
-  'job-posting': () => `You are InsightFlow's hiring assistant. Draft a professional job posting
+  'job-posting': () => `You are HRinsight's hiring assistant. Draft a professional job posting
 for the role described below, in the same voice and structure a real job board posting would use:
 a short company/team blurb, a role summary, a bulleted list of key responsibilities, and a bulleted
 list of requirements (split "required" from "nice to have" if there's enough information).
@@ -22,7 +22,7 @@ provided — do not invent responsibilities that contradict what's given.
 Return ONLY valid JSON, no markdown fences, no preamble:
 { "title": "<job title>", "posting": "<the full posting text, well-formatted with line breaks>" }`,
 
-  'cv-screen': () => `You are InsightFlow's CV screening assistant. Compare the candidate's CV
+  'cv-screen': () => `You are HRinsight's CV screening assistant. Compare the candidate's CV
 against the target job description and produce a factual summary of fit — NOT a score, NOT a
 ranking, NOT a recommendation to hire or reject. Your job is to help a human reviewer read faster,
 not to make the decision for them.
@@ -37,7 +37,7 @@ summary. Stay factual and neutral — no "strong candidate" or "highly recommend
 Return ONLY valid JSON, no markdown fences, no preamble:
 { "matches": ["<point of alignment with the role>", ...], "gaps": ["<missing or unclear relative to the role>", ...], "notes": "<1-2 sentences of other relevant context, neutral tone>" }`,
 
-  'interview-questions': () => `You are InsightFlow's interview prep assistant. Given the job
+  'interview-questions': () => `You are HRinsight's interview prep assistant. Given the job
 description below, generate a structured interview question set: a mix of role-specific/technical
 questions and behavioural questions, plus a short scorecard of the competency areas an interviewer
 should evaluate. Base questions on what the JD actually describes — don't invent unrelated skills.
@@ -49,7 +49,7 @@ Return ONLY valid JSON, no markdown fences, no preamble:
   "scorecardAreas": ["<competency area to rate>", ...]
 }`,
 
-  'offer-letter': () => `You are InsightFlow's offer letter drafting assistant. Draft a professional,
+  'offer-letter': () => `You are HRinsight's offer letter drafting assistant. Draft a professional,
 warm but formal offer letter using the candidate and role details provided. Use placeholder
 bracketed text like [Company Letterhead] or [HR Contact Name] for anything not supplied. Keep it
 to the structure a real offer letter would have: greeting, role/title/level, start date, brief

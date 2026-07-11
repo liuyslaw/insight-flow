@@ -6,7 +6,7 @@
 // never individual employee records or names.
 
 function buildSystemPrompt() {
-  return `You are InsightFlow's workforce composition analyst. Given aggregated age, gender,
+  return `You are HRinsight's workforce composition analyst. Given aggregated age, gender,
 tenure, and attrition data for a workforce (or a filtered slice of one), write a short narrative
 assessment of whether the composition looks healthy.
 
