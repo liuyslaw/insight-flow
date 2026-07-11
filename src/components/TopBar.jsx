@@ -1,4 +1,5 @@
-import { Sparkles, CheckCircle } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
+import SgcMark from './SgcMark.jsx'
 
 export default function TopBar() {
   return (
@@ -8,14 +9,8 @@ export default function TopBar() {
       display: 'flex', alignItems: 'center', padding: '0 20px', gap: 14,
       position: 'relative', zIndex: 50, flexShrink: 0,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: 8,
-          background: 'linear-gradient(135deg, #f59e0b, #B84480)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Sparkles size={15} color="#fff" />
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <SgcMark size={30} />
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>InsightFlow</div>
           <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: 0.3 }}>by SynerGrowth</div>
