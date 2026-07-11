@@ -1,16 +1,13 @@
 // Generic placeholder data modelled on what a job architecture + appraisal
 // rollout typically exports. Not real client data.
-// 50 core employees, each with TWO appraisal cycle records (2025, 2026) —
-// same person, role, site, level; rating/narrative/age/tenure vary by year.
-// Plus 10 leaver records (5 exited 2025, 5 exited 2026) for attrition, and
-// 15 new-hire records that exist ONLY in 2026 (no 2025 history) — a
-// deliberate, drastic AI-driven semiconductor demand hiring surge, spread
-// across site/function/level/gender/age so every chart in Workforce
-// Insights and Talent Management shows real movement when the period
-// selector changes, not just the rating-based ones. All employee names
-// verified unique (no name+region collisions with existing records) after
-// catching and fixing 3 accidental collisions during generation.
-// 2025 headcount 50, 2026 headcount 65. 125 records total. Shaped around
+// 50 core employees, each with TWO appraisal cycle records (2025, 2026).
+// Plus 9 leaver records: 5 exited 2025, 4 exited 2026 (one per quarter, for
+// a clean quarterly attrition trend). Plus 15 new-hire records that exist
+// ONLY in 2026, each carrying a HIRE DATE, distributed 2/3/5/5 across
+// Q1-Q4 2026 — an accelerating hiring curve matching the AI-driven
+// semiconductor demand story, so Workforce Insights can show a genuine
+// quarter-by-quarter headcount trend, not just an annual snapshot.
+// 2025 headcount 50, 2026 headcount 65. 124 records total. Shaped around
 // Frencken.s actual segments: Mechatronics and Integrated Manufacturing Services.
 
 export const sampleTalentDocs = `SITE: Singapore HQ
@@ -1708,7 +1705,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 5 / 5 (Outstanding)
 APPRAISAL NARRATIVE: "Exceptional year — took full ownership of a cross-functional initiative, negotiated directly with external stakeholders, and coached two colleagues toward promotion readiness."
 STATUS: Left
-EXIT DATE: January 2026
+EXIT DATE: February 2026
 GENDER: Male
 AGE: 36
 YEARS OF SERVICE: 2
@@ -1725,7 +1722,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 2 / 5 (Below Expectations)
 APPRAISAL NARRATIVE: "Struggled to keep pace this year and missed several deadlines; needs closer supervision going into the next cycle."
 STATUS: Left
-EXIT DATE: March 2026
+EXIT DATE: May 2026
 GENDER: Female
 AGE: 46
 YEARS OF SERVICE: 11
@@ -1742,7 +1739,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 4 / 5 (Exceeds Expectations)
 APPRAISAL NARRATIVE: "Solid, dependable year. Delivered what was asked and responded well to feedback."
 STATUS: Left
-EXIT DATE: May 2026
+EXIT DATE: August 2026
 GENDER: Male
 AGE: 31
 YEARS OF SERVICE: 1
@@ -1759,26 +1756,9 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "Solid, dependable year. Delivered what was asked and responded well to feedback."
 STATUS: Left
-EXIT DATE: June 2026
+EXIT DATE: November 2026
 GENDER: Female
 AGE: 47
-YEARS OF SERVICE: 7
-
----
-
-SITE: Suzhou, China
-EMPLOYEE: Wouter (placeholder name, CN)
-ROLE: Procurement Specialist, IMS
-BUSINESS UNIT: Integrated Manufacturing Services
-ASSIGNED LEVEL: L3
-JOB DESCRIPTION EXCERPT: "Executes assigned procurement specialist, ims tasks with moderate supervision within Integrated Manufacturing Services, documents procedures, and supports troubleshooting within own work area."
-APPRAISAL CYCLE: 2026
-APPRAISAL RATING: 3 / 5 (Meets Expectations)
-APPRAISAL NARRATIVE: "Consistently met expectations, completed all assigned tasks on time, and worked well within the team."
-STATUS: Left
-EXIT DATE: June 2026
-GENDER: Male
-AGE: 33
 YEARS OF SERVICE: 7
 
 ---
@@ -1793,6 +1773,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: January 2026
 GENDER: Female
 AGE: 22
 YEARS OF SERVICE: 0
@@ -1809,6 +1790,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: February 2026
 GENDER: Male
 AGE: 24
 YEARS OF SERVICE: 0
@@ -1825,6 +1807,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: April 2026
 GENDER: Female
 AGE: 27
 YEARS OF SERVICE: 0
@@ -1841,6 +1824,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 4 / 5 (Exceeds Expectations)
 APPRAISAL NARRATIVE: "Brought in to lead the new production line — strong start standing up the team, full-year assessment expected in the 2027 cycle."
 STATUS: Active
+HIRE DATE: May 2026
 GENDER: Male
 AGE: 34
 YEARS OF SERVICE: 0
@@ -1857,6 +1841,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: June 2026
 GENDER: Female
 AGE: 29
 YEARS OF SERVICE: 0
@@ -1873,6 +1858,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: July 2026
 GENDER: Male
 AGE: 23
 YEARS OF SERVICE: 0
@@ -1889,6 +1875,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: July 2026
 GENDER: Female
 AGE: 21
 YEARS OF SERVICE: 0
@@ -1905,6 +1892,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: August 2026
 GENDER: Female
 AGE: 28
 YEARS OF SERVICE: 0
@@ -1921,6 +1909,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: September 2026
 GENDER: Male
 AGE: 25
 YEARS OF SERVICE: 0
@@ -1937,6 +1926,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: September 2026
 GENDER: Female
 AGE: 23
 YEARS OF SERVICE: 0
@@ -1953,6 +1943,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: October 2026
 GENDER: Male
 AGE: 26
 YEARS OF SERVICE: 0
@@ -1969,6 +1960,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: October 2026
 GENDER: Female
 AGE: 30
 YEARS OF SERVICE: 0
@@ -1985,6 +1977,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: November 2026
 GENDER: Male
 AGE: 24
 YEARS OF SERVICE: 0
@@ -2001,6 +1994,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: December 2026
 GENDER: Female
 AGE: 31
 YEARS OF SERVICE: 0
@@ -2017,6 +2011,7 @@ APPRAISAL CYCLE: 2026
 APPRAISAL RATING: 3 / 5 (Meets Expectations)
 APPRAISAL NARRATIVE: "New joiner in 2026 as part of the semiconductor capacity ramp-up — too early in the cycle for a full assessment; interim check-in scheduled."
 STATUS: Active
+HIRE DATE: December 2026
 GENDER: Male
 AGE: 33
 YEARS OF SERVICE: 0`;
