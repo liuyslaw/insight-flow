@@ -130,7 +130,7 @@ export default function DocumentModule({ onChange }) {
               display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500,
               color: 'var(--gold)', cursor: importing ? 'default' : 'pointer', opacity: importing ? 0.6 : 1,
             }}>
-              <Upload size={13} /> {importing ? 'Reading file…' : 'Upload file (.docx, .xlsx, .txt)'}
+              <Upload size={13} /> {importing ? 'Reading file…' : 'Upload file (.docx, .xlsx, .pdf, .txt)'}
               <input type="file" accept={SUPPORTED_EXTENSIONS} onChange={handleFile} disabled={importing} style={{ display: 'none' }} />
             </label>
             <button
