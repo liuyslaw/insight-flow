@@ -201,7 +201,7 @@ export default function TalentManagementModule() {
       Level: r.level, Function: r.function, 'Appraisal Cycle': r.appraisalCycle ?? '', Rating: r.rating ?? '',
       Gender: r.gender || '', Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
     }))
-    exportRowsToExcel(rows, `InsightFlow-Talent-Data-${new Date().toISOString().slice(0, 10)}`, 'Talent Data')
+    exportRowsToExcel(rows, `HRinsight-Talent-Data-${new Date().toISOString().slice(0, 10)}`, 'Talent Data')
   }
 
   return (

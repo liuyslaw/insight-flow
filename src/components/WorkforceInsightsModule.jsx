@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
-import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2, TrendingDown, Printer, SlidersHorizontal, Check } from 'lucide-react'
+import { BarChart, Bar, PieChart, Pie, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
+import { Activity, Users, X, Sparkles, RefreshCw, AlertTriangle, FileDown, Table2, TrendingDown, TrendingUp, Printer, SlidersHorizontal, Check } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
-import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, computeAttrition } from '../lib/parseTalentDocs.js'
+import { parseTalentRecords, countBy, countByAgeBucket, countByTenureBucket, computeAttrition, computeQuarterlyTrend } from '../lib/parseTalentDocs.js'
 import { buildWorkforceReportDocx } from '../lib/buildWorkforceReport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 import PeriodRangeSelector from './PeriodRangeSelector.jsx'
@@ -51,6 +51,7 @@ const CHART_OPTIONS = [
   { id: 'gender', label: 'Gender Mix' },
   { id: 'tenure', label: 'Years of Service' },
   { id: 'attritionTrend', label: 'Attrition — Year on Year' },
+  { id: 'quarterlyTrend', label: 'Headcount Trend by Quarter' },
 ]
 const MIN_CHARTS = 4
 
@@ -199,6 +200,16 @@ export default function WorkforceInsightsModule() {
     [allRecords, cycleRangeYears]
   )
 
+  // Baseline for the quarterly trend = active headcount at the end of the prior cycle
+  const priorYearActiveCount = useMemo(
+    () => allRecords.filter((r) => r.status === 'Active' && r.appraisalCycle === rangeEndYear - 1).length,
+    [allRecords, rangeEndYear]
+  )
+  const quarterlyTrend = useMemo(
+    () => priorYearActiveCount ? computeQuarterlyTrend(allRecords, rangeEndYear, priorYearActiveCount) : [],
+    [allRecords, rangeEndYear, priorYearActiveCount]
+  )
+
   useEffect(() => { setSummary(null) }, [rangeStartYear, rangeEndYear, siteFilter, functionFilter])
 
   function toggleChart(id) {
@@ -258,7 +269,7 @@ export default function WorkforceInsightsModule() {
       Level: r.level, 'Appraisal Cycle': r.appraisalCycle ?? '', Gender: r.gender || '',
       Age: r.age ?? '', 'Years of Service': r.yearsOfService ?? '',
     }))
-    exportRowsToExcel(rows, `InsightFlow-Workforce-Data-${new Date().toISOString().slice(0, 10)}`, 'Workforce Data')
+    exportRowsToExcel(rows, `HRinsight-Workforce-Data-${new Date().toISOString().slice(0, 10)}`, 'Workforce Data')
   }
 
   return (
@@ -376,6 +387,29 @@ export default function WorkforceInsightsModule() {
           <p style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 0, marginBottom: 18, fontStyle: 'italic' }}>
             Attrition rate = leavers in cycle ÷ (active + leavers in cycle) × 100 — a simplified phase-1 proxy, not official HR methodology.
           </p>
+
+          {show('quarterlyTrend') && quarterlyTrend.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <ChartCard title={`Headcount Trend by Quarter — ${rangeEndYear}`}>
+                <ResponsiveContainer width="100%" height={220}>
+                  <ComposedChart data={quarterlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="quarter" tick={axisStyle} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                    <YAxis yAxisId="left" tick={axisStyle} axisLine={false} tickLine={false} width={28} />
+                    <YAxis yAxisId="right" orientation="right" tick={axisStyle} axisLine={false} tickLine={false} width={40} domain={['dataMin - 3', 'dataMax + 3']} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                    <Legend wrapperStyle={{ fontSize: 11, color: 'var(--text3)' }} />
+                    <Bar yAxisId="left" dataKey="added" name="Added" fill="var(--green)" radius={[3, 3, 0, 0]} barSize={22} />
+                    <Bar yAxisId="left" dataKey="dropped" name="Departed" fill={attritionColor} radius={[3, 3, 0, 0]} barSize={22} />
+                    <Line yAxisId="right" type="monotone" dataKey="headcount" name="Active headcount" stroke="#fbbf24" strokeWidth={2} dot={{ r: 3 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </ChartCard>
+              <p style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 8, fontStyle: 'italic' }}>
+                Bars show additions/departures each quarter (left axis); the line shows cumulative active headcount (right axis), starting from the {rangeEndYear - 1} year-end baseline.
+              </p>
+            </div>
+          )}
 
           <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 12 }}>Click any bar or slice to see who's behind the number.</p>
 
@@ -541,11 +575,13 @@ export default function WorkforceInsightsModule() {
                   scope: filterLabel, ageData, genderData, tenureData,
                   attritionRate: attrition?.rate?.toFixed(1), leaverCount: attrition?.leaverCount,
                   headcountByLevel: byLevel, headcountBySite: bySite, headcountByFunction: byFunction,
+                  quarterlyHeadcountTrend: quarterlyTrend,
                 }}
                 starterQuestions={[
                   'Which site has the most attrition risk?',
                   'Is the age distribution concentrated anywhere?',
                   'What does the tenure mix suggest about retention?',
+                  'Which quarter had the strongest hiring growth?',
                 ]}
               />
             </div>

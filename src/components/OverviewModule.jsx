@@ -75,7 +75,7 @@ export default function OverviewModule({ onNavigate }) {
         border: '1px solid var(--border)', borderRadius: 12, padding: '26px 28px', marginBottom: 24,
       }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
-          InsightFlow — HR Intelligence Layer
+          HRinsight — HR Intelligence Layer
         </div>
         <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 640 }}>
           One shared document repository feeding four purpose-built views — consistency, workforce

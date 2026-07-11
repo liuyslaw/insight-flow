@@ -12,7 +12,7 @@ export default function TopBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <SgcMark size={30} />
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>InsightFlow</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>HRinsight</div>
           <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: 0.3 }}>by SynerGrowth</div>
         </div>
       </div>

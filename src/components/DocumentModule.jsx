@@ -65,7 +65,7 @@ export default function DocumentModule({ onChange }) {
       Title: d.title, Type: typeMeta[d.type]?.label || d.type, Source: d.source,
       'Added At': new Date(d.addedAt).toLocaleDateString('en-GB'), 'Characters': d.body.length,
     }))
-    exportRowsToExcel(rows, `InsightFlow-Document-Inventory-${new Date().toISOString().slice(0, 10)}`, 'Repository')
+    exportRowsToExcel(rows, `HRinsight-Document-Inventory-${new Date().toISOString().slice(0, 10)}`, 'Repository')
   }
 
   return (

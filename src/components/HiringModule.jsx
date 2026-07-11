@@ -23,7 +23,7 @@ export default function HiringModule() {
       </div>
       <p style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 580, marginBottom: 18 }}>
         Job posting drafts, CV screening, interview prep, and offer letters — phase 1, manual and
-        document-driven, same as the rest of InsightFlow. Not a replacement for an ATS.
+        document-driven, same as the rest of HRinsight. Not a replacement for an ATS.
       </p>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 22, flexWrap: 'wrap' }}>
