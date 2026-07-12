@@ -33,6 +33,7 @@ export default function TalentManagementModule() {
   const [trainingDocs, setTrainingDocs] = useState([])
   const [startPeriod, setStartPeriod] = useState({ period: 'FY', year: 2026 })
   const [endPeriod, setEndPeriod] = useState({ period: 'FY', year: 2026 })
+  const [lastChanged, setLastChanged] = useState('end')
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [loading, setLoading] = useState(false)
@@ -72,9 +73,16 @@ export default function TalentManagementModule() {
   // caused the snapshot to silently ignore whichever box was just changed.
   const rangeStartYear = startPeriod.year
   const rangeEndYear = endPeriod.year
-  const rangeEndRank = PERIOD_RANK[endPeriod.period]
   const invalidRange = periodOrderOf(startPeriod) > periodOrderOf(endPeriod)
-  const previousYear = rangeEndYear - 1
+
+  // The snapshot is driven by whichever box was most recently changed, not
+  // always "To" — fixing "To" and moving "From" previously had zero visible
+  // effect, which was a real UX flaw. The full start–end range still drives
+  // the Talent Movement year-on-year comparison separately, below.
+  const snapshotPeriod = lastChanged === 'start' ? startPeriod : endPeriod
+  const snapshotYear = snapshotPeriod.year
+  const snapshotRank = PERIOD_RANK[snapshotPeriod.period]
+  const previousYear = snapshotYear - 1
 
   const allActiveRecords = useMemo(() => allRecords.filter((r) => r.status === 'Active'), [allRecords])
   const rangeActiveRecords = useMemo(
@@ -83,10 +91,10 @@ export default function TalentManagementModule() {
   )
   // Quarter-aware: new hires only count once the selected quarter reaches
   // their actual hire quarter (see isActiveAsOfPeriod) — so this genuinely
-  // changes as you move the period selector, not just when the year changes.
+  // changes as you move either end of the period selector.
   const cycleRecords = useMemo(
-    () => allRecords.filter((r) => isActiveAsOfPeriod(r, rangeEndYear, rangeEndRank)),
-    [allRecords, rangeEndYear, rangeEndRank]
+    () => allRecords.filter((r) => isActiveAsOfPeriod(r, snapshotYear, snapshotRank)),
+    [allRecords, snapshotYear, snapshotRank]
   )
   const quarterDataYears = useMemo(
     () => [...new Set(allRecords.filter((r) => r.hireDate).map((r) => Number(r.hireDate.trim().split(/\s+/)[1])))],
@@ -104,10 +112,10 @@ export default function TalentManagementModule() {
   const hasPriorCycle = cycles.includes(previousYear)
   const movement = useMemo(() => {
     if (!hasPriorCycle) return []
-    const all = computeTalentMovement(allActiveRecords, rangeEndYear, previousYear)
+    const all = computeTalentMovement(allActiveRecords, snapshotYear, previousYear)
     const filteredEmployees = new Set(records.map((r) => r.employee))
     return all.filter((r) => filteredEmployees.has(r.employee))
-  }, [hasPriorCycle, allActiveRecords, rangeEndYear, previousYear, records])
+  }, [hasPriorCycle, allActiveRecords, snapshotYear, previousYear, records])
 
   const movementCounts = useMemo(() => {
     const counts = { Rising: 0, Steady: 0, 'Needs Attention': 0, 'No prior data': 0 }
@@ -134,17 +142,19 @@ export default function TalentManagementModule() {
 
   function handleStartChange(next) {
     setStartPeriod(next)
+    setLastChanged('start')
     if (periodOrderOf(next) > periodOrderOf(endPeriod)) setEndPeriod(next)
   }
   function handleEndChange(next) {
     setEndPeriod(next)
+    setLastChanged('end')
     if (periodOrderOf(next) < periodOrderOf(startPeriod)) setStartPeriod(next)
   }
 
-  const endLabel = endPeriod.period === 'FY' ? `FY${rangeEndYear}` : `${endPeriod.period} ${rangeEndYear}`
+  const snapshotLabel = snapshotPeriod.period === 'FY' ? `FY${snapshotYear}` : `${snapshotPeriod.period} ${snapshotYear}`
   const periodLabel = invalidRange
     ? `Invalid range (From is after To)`
-    : rangeStartYear === rangeEndYear ? endLabel : `${rangeStartYear}–${rangeEndYear} (as of ${endLabel})`
+    : rangeStartYear === rangeEndYear ? snapshotLabel : `${rangeStartYear}–${rangeEndYear} (viewing ${snapshotLabel})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
@@ -155,7 +165,7 @@ export default function TalentManagementModule() {
     rating: r, count: records.filter((rec) => rec.rating === r).length,
   }))
 
-  useEffect(() => { setTalentSummary(null) }, [rangeStartYear, rangeEndYear, siteFilter, functionFilter])
+  useEffect(() => { setTalentSummary(null) }, [snapshotYear, snapshotRank, siteFilter, functionFilter])
 
   async function generateTalentSummary() {
     setLoadingTalentSummary(true); setTalentSummaryError(null); setTalentSummary(null)
@@ -252,6 +262,8 @@ export default function TalentManagementModule() {
           onChangeEnd={handleEndChange}
           accentColor="var(--magenta)"
           quarterDataYears={quarterDataYears}
+          snapshotLabel={snapshotLabel}
+          snapshotYear={snapshotYear}
         />
       </div>
 
@@ -301,7 +313,7 @@ export default function TalentManagementModule() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
             <ArrowUp size={13} color="var(--green)" />
             <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-              Talent Movement — {rangeEndYear} vs {previousYear}
+              Talent Movement — {snapshotYear} vs {previousYear}
             </span>
           </div>
           {!hasPriorCycle ? (
@@ -347,7 +359,7 @@ export default function TalentManagementModule() {
                       }}>
                         <span style={{ color: 'var(--text)' }}>{r.employee}</span>
                         <span style={{ color: 'var(--text3)', fontFamily: 'var(--mono)', fontSize: 11 }}>
-                          {r.role} · {previousYear}: {r.previousRating} → {rangeEndYear}: {r.rating}
+                          {r.role} · {previousYear}: {r.previousRating} → {snapshotYear}: {r.rating}
                         </span>
                       </div>
                     ))}

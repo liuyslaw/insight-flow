@@ -118,6 +118,7 @@ export default function WorkforceInsightsModule() {
   const [talentDocs, setTalentDocs] = useState([])
   const [startPeriod, setStartPeriod] = useState({ period: 'FY', year: 2026 })
   const [endPeriod, setEndPeriod] = useState({ period: 'FY', year: 2026 })
+  const [lastChanged, setLastChanged] = useState('end')
   const [siteFilter, setSiteFilter] = useState('all')
   const [functionFilter, setFunctionFilter] = useState('all')
   const [visibleCharts, setVisibleCharts] = useState(CHART_OPTIONS.map((c) => c.id))
@@ -146,7 +147,6 @@ export default function WorkforceInsightsModule() {
   // caused the snapshot to silently ignore whichever box was just changed.
   const rangeStartYear = startPeriod.year
   const rangeEndYear = endPeriod.year
-  const rangeEndRank = PERIOD_RANK[endPeriod.period]
   const invalidRange = periodOrderOf(startPeriod) > periodOrderOf(endPeriod)
   const cycleRangeYears = useMemo(
     () => cycles.filter((c) => c >= rangeStartYear && c <= rangeEndYear),
@@ -158,11 +158,21 @@ export default function WorkforceInsightsModule() {
     [allRecords]
   )
 
-  // Active workforce "as of" the selected quarter — genuinely progressive
+  // The snapshot (composition charts) is driven by whichever box the person
+  // most recently changed — not always "To". Fixing "To" and moving "From"
+  // previously had zero visible effect, which read as a bug (and was a real
+  // UX flaw, not just a misunderstanding): both ends of the selector should
+  // be live. The full start–end range still separately drives the
+  // multi-cycle trend charts (Attrition YoY, Quarterly Trend) further down.
+  const snapshotPeriod = lastChanged === 'start' ? startPeriod : endPeriod
+  const snapshotYear = snapshotPeriod.year
+  const snapshotRank = PERIOD_RANK[snapshotPeriod.period]
+
+  // Active workforce "as of" the snapshot period — genuinely progressive
   // for years with quarter-level hire data (see isActiveAsOfPeriod).
   const activeInCycle = useMemo(
-    () => allRecords.filter((r) => isActiveAsOfPeriod(r, rangeEndYear, rangeEndRank)),
-    [allRecords, rangeEndYear, rangeEndRank]
+    () => allRecords.filter((r) => isActiveAsOfPeriod(r, snapshotYear, snapshotRank)),
+    [allRecords, snapshotYear, snapshotRank]
   )
 
   const siteOptions = useMemo(() => countBy(activeInCycle, 'site').map((c) => c.name), [activeInCycle])
@@ -175,17 +185,19 @@ export default function WorkforceInsightsModule() {
 
   function handleStartChange(next) {
     setStartPeriod(next)
+    setLastChanged('start')
     if (periodOrderOf(next) > periodOrderOf(endPeriod)) setEndPeriod(next)
   }
   function handleEndChange(next) {
     setEndPeriod(next)
+    setLastChanged('end')
     if (periodOrderOf(next) < periodOrderOf(startPeriod)) setStartPeriod(next)
   }
 
-  const endLabel = endPeriod.period === 'FY' ? `FY${rangeEndYear}` : `${endPeriod.period} ${rangeEndYear}`
+  const snapshotLabel = snapshotPeriod.period === 'FY' ? `FY${snapshotYear}` : `${snapshotPeriod.period} ${snapshotYear}`
   const periodLabel = invalidRange
     ? `Invalid range (From is after To)`
-    : rangeStartYear === rangeEndYear ? endLabel : `${rangeStartYear}–${rangeEndYear} (as of ${endLabel})`
+    : rangeStartYear === rangeEndYear ? snapshotLabel : `${rangeStartYear}–${rangeEndYear} (viewing ${snapshotLabel})`
   const filterLabel = [
     periodLabel,
     siteFilter !== 'all' ? siteFilter : null,
@@ -210,7 +222,7 @@ export default function WorkforceInsightsModule() {
   })
   const genderData = Object.entries(genderCounts).map(([name, value]) => ({ name, value }))
 
-  const attrition = useMemo(() => computeAttrition(allRecords, rangeEndYear), [allRecords, rangeEndYear])
+  const attrition = useMemo(() => computeAttrition(allRecords, snapshotYear), [allRecords, snapshotYear])
   const attritionByYear = useMemo(
     () => cycleRangeYears.map((c) => {
       const a = computeAttrition(allRecords, c)
@@ -221,15 +233,15 @@ export default function WorkforceInsightsModule() {
 
   // Baseline for the quarterly trend = active headcount at the end of the prior cycle
   const priorYearActiveCount = useMemo(
-    () => allRecords.filter((r) => r.status === 'Active' && r.appraisalCycle === rangeEndYear - 1).length,
-    [allRecords, rangeEndYear]
+    () => allRecords.filter((r) => r.status === 'Active' && r.appraisalCycle === snapshotYear - 1).length,
+    [allRecords, snapshotYear]
   )
   const quarterlyTrend = useMemo(
-    () => priorYearActiveCount ? computeQuarterlyTrend(allRecords, rangeEndYear, priorYearActiveCount) : [],
-    [allRecords, rangeEndYear, priorYearActiveCount]
+    () => priorYearActiveCount ? computeQuarterlyTrend(allRecords, snapshotYear, priorYearActiveCount) : [],
+    [allRecords, snapshotYear, priorYearActiveCount]
   )
 
-  useEffect(() => { setSummary(null) }, [rangeStartYear, rangeEndYear, siteFilter, functionFilter])
+  useEffect(() => { setSummary(null) }, [snapshotYear, snapshotRank, siteFilter, functionFilter])
 
   function toggleChart(id) {
     setVisibleCharts((v) => v.includes(id) ? v.filter((x) => x !== id) : [...v, id])
@@ -249,7 +261,7 @@ export default function WorkforceInsightsModule() {
     setDrill({ label, matches: records.filter((r) => r[field] === value) })
   }
   function drillAttrition() {
-    setDrill({ label: `Left in Cycle ${rangeEndYear}`, matches: attrition.leavers })
+    setDrill({ label: `Left in Cycle ${snapshotYear}`, matches: attrition.leavers })
   }
 
   async function generateSummary() {
@@ -313,6 +325,8 @@ export default function WorkforceInsightsModule() {
           onChangeEnd={handleEndChange}
           accentColor="#fbbf24"
           quarterDataYears={quarterDataYears}
+          snapshotLabel={snapshotLabel}
+          snapshotYear={snapshotYear}
         />
       </div>
 
@@ -384,7 +398,7 @@ export default function WorkforceInsightsModule() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <TrendingDown size={13} color={attritionColor} />
                 <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-                  Attrition — Cycle {rangeEndYear}
+                  Attrition — Cycle {snapshotYear}
                 </span>
               </div>
               <div style={{ fontSize: 24, fontWeight: 700, color: attritionColor }}>{attrition?.rate?.toFixed(1)}%</div>
@@ -410,7 +424,7 @@ export default function WorkforceInsightsModule() {
 
           {show('quarterlyTrend') && quarterlyTrend.length > 0 && (
             <div style={{ marginBottom: 18 }}>
-              <ChartCard title={`Headcount Trend by Quarter — ${rangeEndYear}`} totalLabel={quarterlyTrend[quarterlyTrend.length - 1]?.headcount != null ? `${quarterlyTrend[quarterlyTrend.length - 1].headcount} by year-end` : null}>
+              <ChartCard title={`Headcount Trend by Quarter — ${snapshotYear}`} totalLabel={quarterlyTrend[quarterlyTrend.length - 1]?.headcount != null ? `${quarterlyTrend[quarterlyTrend.length - 1].headcount} by year-end` : null}>
                 <ResponsiveContainer width="100%" height={220}>
                   <ComposedChart data={quarterlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -426,7 +440,7 @@ export default function WorkforceInsightsModule() {
                 </ResponsiveContainer>
               </ChartCard>
               <p style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 8, fontStyle: 'italic' }}>
-                Bars show additions/departures each quarter (left axis); the line shows cumulative active headcount (right axis), starting from the {rangeEndYear - 1} year-end baseline.
+                Bars show additions/departures each quarter (left axis); the line shows cumulative active headcount (right axis), starting from the {snapshotYear - 1} year-end baseline.
               </p>
             </div>
           )}

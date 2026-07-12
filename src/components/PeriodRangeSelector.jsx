@@ -52,14 +52,13 @@ function Box({ label, value, years, onChange, accentColor, showYtd, onYtd }) {
  * the year as you move the selector. 2025 only has annual data, so every
  * quarter shows the same year-end figure — stated below, not hidden.
  */
-export default function PeriodRangeSelector({ years, start, end, onChangeStart, onChangeEnd, accentColor = 'var(--magenta)', quarterDataYears = [] }) {
+export default function PeriodRangeSelector({ years, start, end, onChangeStart, onChangeEnd, accentColor = 'var(--magenta)', quarterDataYears = [], snapshotLabel, snapshotYear }) {
   function setYtd() {
     onChangeEnd({ period: TODAY.period, year: TODAY.year })
   }
 
   const isRange = periodOrder(start) !== periodOrder(end)
-  const endLabel = end.period === 'FY' ? `FY${end.year}` : `${end.period} ${end.year}`
-  const hasQuarterData = quarterDataYears.includes(end.year)
+  const hasQuarterData = quarterDataYears.includes(snapshotYear ?? end.year)
 
   return (
     <div>
@@ -72,15 +71,15 @@ export default function PeriodRangeSelector({ years, start, end, onChangeStart, 
           fontSize: 10.5, fontWeight: 600, color: accentColor, background: `${accentColor}18`,
           border: `1px solid ${accentColor}40`, borderRadius: 6, padding: '4px 10px',
         }}>
-          Viewing: {endLabel}
+          Viewing: {snapshotLabel}
         </span>
       </div>
       <p style={{ fontSize: 10, color: 'var(--text3)', marginTop: 5, marginBottom: 0 }}>
         {!hasQuarterData
-          ? `${end.year} only has annual data — every quarter shows the same year-end snapshot. Select 2026 for live quarter-by-quarter change.`
+          ? `${snapshotYear ?? end.year} only has annual data — every quarter shows the same year-end snapshot. Select 2026 for live quarter-by-quarter change.`
           : isRange
-            ? `Charts show the "To" period (${endLabel}). Year-on-year comparisons use every cycle from "From" to "To".`
-            : 'Headcount and composition update live as you change the quarter — try moving "To" between Q1 and Q4.'}
+            ? `Charts show whichever box you last changed. Year-on-year comparisons use every cycle from "From" to "To".`
+            : 'Headcount and composition update live as you change either "From" or "To" — try moving either between Q1 and Q4.'}
       </p>
     </div>
   )
