@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Upload, Trash2, RotateCcw, FileText, Table2 } from 'lucide-react'
+import { Upload, Trash2, RotateCcw, FileText, Table2, X, Copy, Check } from 'lucide-react'
 import { getDocuments, addDocument, removeDocument, resetToSample } from '../data/documentStore.js'
 import { importFile, SUPPORTED_EXTENSIONS } from '../lib/fileImport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
@@ -17,6 +17,15 @@ export default function DocumentModule({ onChange }) {
   const [type, setType] = useState('talent')
   const [body, setBody] = useState('')
   const [notice, setNotice] = useState(null)
+  const [viewingDoc, setViewingDoc] = useState(null)
+  const [copied, setCopied] = useState(false)
+
+  function copyBody() {
+    if (!viewingDoc) return
+    navigator.clipboard.writeText(viewingDoc.body)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   useEffect(() => { setDocs(getDocuments()) }, [])
 
@@ -179,10 +188,16 @@ export default function DocumentModule({ onChange }) {
             padding: '12px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
           }}>
             <div style={{ minWidth: 0, display: 'flex', gap: 10 }}>
-              <FileText size={14} color="var(--text3)" style={{ marginTop: 2, flexShrink: 0 }} />
+              <button
+                onClick={() => setViewingDoc(doc)}
+                title="View full document"
+                style={{ background: 'none', marginTop: 2, flexShrink: 0, cursor: 'pointer', borderRadius: 4 }}
+              >
+                <FileText size={14} color="var(--gold)" />
+              </button>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{doc.title}</span>
+                  <button onClick={() => setViewingDoc(doc)} style={{ background: 'none', fontSize: 13, color: 'var(--text)', fontWeight: 500, cursor: 'pointer' }}>{doc.title}</button>
                   <span className={`badge ${typeMeta[doc.type]?.className}`}>{typeMeta[doc.type]?.label || doc.type}</span>
                   <span className="chip">{doc.source}</span>
                 </div>
@@ -203,6 +218,61 @@ export default function DocumentModule({ onChange }) {
           </p>
         )}
       </div>
+
+      {viewingDoc && (
+        <div
+          onClick={() => setViewingDoc(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 100,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+              width: '100%', maxWidth: 720, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+              padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0,
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <span style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600 }}>{viewingDoc.title}</span>
+                  <span className={`badge ${typeMeta[viewingDoc.type]?.className}`}>{typeMeta[viewingDoc.type]?.label || viewingDoc.type}</span>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                  {viewingDoc.source} · {viewingDoc.body.length.toLocaleString()} characters · added {new Date(viewingDoc.addedAt).toLocaleDateString('en-GB')}
+                </span>
+              </div>
+              <button onClick={() => setViewingDoc(null)} style={{ background: 'none', flexShrink: 0 }}>
+                <X size={18} color="var(--text3)" />
+              </button>
+            </div>
+            <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>
+              <pre style={{
+                fontFamily: 'var(--mono)', fontSize: 12, lineHeight: 1.7, color: 'var(--text2)',
+                whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0,
+              }}>{viewingDoc.body}</pre>
+            </div>
+            <div style={{
+              display: 'flex', justifyContent: 'flex-end', padding: '12px 20px',
+              borderTop: '1px solid var(--border)', flexShrink: 0,
+            }}>
+              <button onClick={copyBody} style={{
+                display: 'flex', alignItems: 'center', gap: 6, background: 'var(--card2)',
+                border: '1px solid var(--border)', borderRadius: 7, padding: '7px 14px',
+                color: 'var(--text2)', fontSize: 11.5,
+              }}>
+                {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy full text</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
