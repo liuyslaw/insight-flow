@@ -398,7 +398,7 @@ export default function TalentManagementModule() {
                   <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>Completion Status — click to filter log</div>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={trainingStatusData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)' vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                       <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
                       <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
                       <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
