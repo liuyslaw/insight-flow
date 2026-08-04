@@ -329,7 +329,11 @@ export default function TalentManagementModule() {
                     <button key={cat} onClick={() => setMovementDrill(cat)} style={{
                       textAlign: 'left', flex: '1 1 160px', minWidth: 150, background: meta.bg,
                       border: `1px solid ${meta.color}40`, borderRadius: 9, padding: '12px 14px',
-                    }}>
+                      boxShadow: 'var(--shadow-card)', transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                         <meta.Icon size={13} color={meta.color} />
                         <span style={{ fontSize: 10.5, color: meta.color, fontWeight: 600 }}>{cat}</span>
@@ -343,7 +347,7 @@ export default function TalentManagementModule() {
                 Rising = rating improved and now 4+. Needs Attention = rating declined. Click a card to see who.
               </p>
               {movementDrill && (
-                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+                <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <span style={{ fontSize: 10, color: movementMeta[movementDrill].color, textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
                       {movementDrill} — {movementCounts[movementDrill] || 0}
@@ -390,11 +394,11 @@ export default function TalentManagementModule() {
                 {employeesWithTraining} of {records.length} employees in this selection have at least one training assignment.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 14 }}>
-                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
+                <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
                   <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 14 }}>Completion Status — click to filter log</div>
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={trainingStatusData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)' vertical={false} />
                       <XAxis dataKey="name" tick={{ ...axisStyle, fontSize: 10 }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} interval={0} />
                       <YAxis tick={axisStyle} axisLine={false} tickLine={false} allowDecimals={false} width={24} />
                       <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
@@ -406,7 +410,7 @@ export default function TalentManagementModule() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
+                <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 18px', flex: '1 1 280px', minWidth: 260 }}>
                   <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 12 }}>By Course — click to filter log</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {trainingByCourse.map((c) => (
@@ -424,7 +428,7 @@ export default function TalentManagementModule() {
               </div>
 
               {/* Training Log — who attended what, and when */}
-              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '14px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
                     Training Log — {filteredTrainingLog.length} record{filteredTrainingLog.length === 1 ? '' : 's'}
@@ -507,7 +511,7 @@ export default function TalentManagementModule() {
 
       {/* Context strip */}
       <div style={{
-        background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 9,
+        background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 9,
         padding: '12px 16px', marginBottom: 18, display: 'flex', gap: 28, flexWrap: 'wrap',
       }}>
         {[
@@ -524,7 +528,7 @@ export default function TalentManagementModule() {
       </div>
 
       {records.length === 0 && (
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current selection</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', opacity: 0.7, marginTop: 4 }}>
@@ -541,7 +545,7 @@ export default function TalentManagementModule() {
       )}
 
       {loading && (
-        <div style={{ background: 'var(--card)', border: '1px solid rgba(184,68,128,0.25)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid rgba(184,68,128,0.25)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 22, color: 'var(--magenta)', marginBottom: 10 }}>✦</div>
           <div style={{ fontSize: 13, color: 'var(--magenta)' }}>Analysing job levels and appraisal data…</div>
           <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>Usually takes 5–10 seconds</div>
@@ -586,7 +590,7 @@ export default function TalentManagementModule() {
           </div>
 
           {result.narrative && (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '24px 28px' }}>
+            <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '24px 28px' }}>
               <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Sparkles size={11} /> Leadership Summary
               </div>
