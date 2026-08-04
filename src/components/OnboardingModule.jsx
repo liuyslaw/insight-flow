@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { UserPlus, Sparkles, RefreshCw, AlertTriangle, CheckSquare, Square, FileText, Printer, Plus, X, FileDown } from 'lucide-react'
+import { UserPlus, Sparkles, RefreshCw, AlertTriangle, CheckSquare, Square, FileText, Printer, Plus, X, FileDown, CheckCircle2 } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords } from '../lib/parseTalentDocs.js'
 import { buildOnboardingReportDocx } from '../lib/buildOnboardingReport.js'
+import { getOnboardingPlans, savePlans, togglePlanTask, signOffSection, clearSignOff } from '../data/onboardingStore.js'
 
 const sections = [
   { key: 'preboarding', label: 'Pre-boarding' },
@@ -10,6 +11,15 @@ const sections = [
   { key: 'week1', label: 'Week 1' },
   { key: 'month1', label: 'Month 1' },
 ]
+
+function formatDate(iso) {
+  if (!iso) return ''
+  try {
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return ''
+  }
+}
 
 export default function OnboardingModule() {
   const [templates, setTemplates] = useState([])
@@ -23,8 +33,12 @@ export default function OnboardingModule() {
   const [customSite, setCustomSite] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [plans, setPlans] = useState([]) // [{ role, level, site, checklist, managerBrief }]
-  const [checked, setChecked] = useState({})
+  const [plans, setPlans] = useState([]) // [{ id, role, level, site, checklist, managerBrief, checkedTasks, signOffs, createdAt }]
+
+  // Inline sign-off expand state: `${planIdx}-${sectionKey}` while a form is open
+  const [signOffOpen, setSignOffOpen] = useState(null)
+  const [signOffName, setSignOffName] = useState('')
+  const [signOffNote, setSignOffNote] = useState('')
 
   useEffect(() => {
     setTemplates(getDocumentsByType('onboarding'))
@@ -35,6 +49,10 @@ export default function OnboardingModule() {
     const latestCycle = cycles.length ? Math.max(...cycles) : null
     const current = allRecords.filter((r) => r.status === 'Active' && (latestCycle == null || r.appraisalCycle === latestCycle))
     setTalentRecords(current)
+
+    // Restore any previously generated (and persisted) onboarding plans
+    const savedPlans = getOnboardingPlans()
+    if (savedPlans.length) setPlans(savedPlans)
   }, [])
 
   function toggleRecord(i) {
@@ -73,12 +91,17 @@ export default function OnboardingModule() {
 
   async function generate() {
     if (!selected.length) return
-    setLoading(true); setError(null); setPlans([]); setChecked({})
+    setLoading(true); setError(null)
     try {
       const results = await Promise.allSettled(selected.map(generateOne))
       const ok = results.filter((r) => r.status === 'fulfilled').map((r) => r.value)
       const failed = results.filter((r) => r.status === 'rejected')
-      setPlans(ok)
+      if (ok.length) {
+        // Persist the newly generated plans alongside whatever was already saved,
+        // and adopt the id-attached, merged array as the new UI state.
+        const updatedPlans = savePlans(ok)
+        setPlans(updatedPlans)
+      }
       if (failed.length) setError(`${failed.length} of ${selected.length} plan(s) failed to generate.`)
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
@@ -98,8 +121,39 @@ export default function OnboardingModule() {
   }
 
   function toggleTask(planIdx, section, i) {
-    const key = `${planIdx}-${section}-${i}`
-    setChecked((c) => ({ ...c, [key]: !c[key] }))
+    const plan = plans[planIdx]
+    if (!plan?.id) return
+    const updatedPlans = togglePlanTask(plan.id, section, i)
+    setPlans(updatedPlans)
+  }
+
+  function openSignOff(planIdx, sectionKey) {
+    setSignOffOpen(`${planIdx}-${sectionKey}`)
+    setSignOffName('')
+    setSignOffNote('')
+  }
+
+  function cancelSignOff() {
+    setSignOffOpen(null)
+    setSignOffName('')
+    setSignOffNote('')
+  }
+
+  function confirmSignOff(planIdx, sectionKey) {
+    const plan = plans[planIdx]
+    if (!plan?.id || !signOffName.trim()) return
+    const updatedPlans = signOffSection(plan.id, sectionKey, { managerName: signOffName, note: signOffNote })
+    setPlans(updatedPlans)
+    setSignOffOpen(null)
+    setSignOffName('')
+    setSignOffNote('')
+  }
+
+  function undoSignOff(planIdx, sectionKey) {
+    const plan = plans[planIdx]
+    if (!plan?.id) return
+    const updatedPlans = clearSignOff(plan.id, sectionKey)
+    setPlans(updatedPlans)
   }
 
   return (
@@ -205,30 +259,87 @@ export default function OnboardingModule() {
           </div>
 
           {plans.map((plan, pi) => (
-            <div key={pi} style={{ marginBottom: 28, pageBreakInside: 'avoid' }}>
+            <div key={plan.id || pi} style={{ marginBottom: 28, pageBreakInside: 'avoid' }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
                 {plan.role} <span style={{ color: 'var(--text3)', fontWeight: 400 }}>— {plan.level} — {plan.site}</span>
               </div>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-                {sections.map((s) => (
-                  <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
-                    <div style={{ fontSize: 9.5, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 9 }}>
-                      {s.label}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {(plan.checklist?.[s.key] || []).map((task, i) => {
-                        const key = `${pi}-${s.key}-${i}`
-                        const isChecked = !!checked[key]
-                        return (
-                          <button key={i} onClick={() => toggleTask(pi, s.key, i)} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, textAlign: 'left', background: 'none' }}>
-                            {isChecked ? <CheckSquare size={13} color="var(--green)" style={{ marginTop: 1, flexShrink: 0 }} /> : <Square size={13} color="var(--text3)" style={{ marginTop: 1, flexShrink: 0 }} />}
-                            <span style={{ fontSize: 12, lineHeight: 1.5, color: isChecked ? 'var(--text3)' : 'var(--text2)', textDecoration: isChecked ? 'line-through' : 'none' }}>{task}</span>
+                {sections.map((s) => {
+                  const signOff = plan.signOffs?.[s.key]
+                  const signOffKey = `${pi}-${s.key}`
+                  const isSignOffOpen = signOffOpen === signOffKey
+                  return (
+                    <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
+                      <div style={{ fontSize: 9.5, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 9 }}>
+                        {s.label}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                        {(plan.checklist?.[s.key] || []).map((task, i) => {
+                          const taskKey = `${s.key}-${i}`
+                          const isChecked = !!(plan.checkedTasks && plan.checkedTasks[taskKey])
+                          return (
+                            <button key={i} onClick={() => toggleTask(pi, s.key, i)} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, textAlign: 'left', background: 'none' }}>
+                              {isChecked ? <CheckSquare size={13} color="var(--green)" style={{ marginTop: 1, flexShrink: 0 }} /> : <Square size={13} color="var(--text3)" style={{ marginTop: 1, flexShrink: 0 }} />}
+                              <span style={{ fontSize: 12, lineHeight: 1.5, color: isChecked ? 'var(--text3)' : 'var(--text2)', textDecoration: isChecked ? 'line-through' : 'none' }}>{task}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Manager sign-off — inline expand, no modal */}
+                      {signOff ? (
+                        <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--border)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--green)' }}>
+                            <CheckCircle2 size={12} color="var(--green)" style={{ flexShrink: 0 }} />
+                            <span>Signed off by {signOff.managerName} — {formatDate(signOff.signedAt)}</span>
+                          </div>
+                          {signOff.note && (
+                            <p style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5, marginTop: 4 }}>{signOff.note}</p>
+                          )}
+                          <button className="no-print" onClick={() => undoSignOff(pi, s.key)} style={{ background: 'none', fontSize: 10.5, color: 'var(--text3)', textDecoration: 'underline', marginTop: 4 }}>
+                            Undo
                           </button>
-                        )
-                      })}
+                        </div>
+                      ) : isSignOffOpen ? (
+                        <div className="no-print" style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <input
+                            value={signOffName}
+                            onChange={(e) => setSignOffName(e.target.value)}
+                            placeholder="Manager name"
+                            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 8px', fontSize: 11.5, color: 'var(--text)' }}
+                          />
+                          <textarea
+                            value={signOffNote}
+                            onChange={(e) => setSignOffNote(e.target.value)}
+                            placeholder="Note (optional)"
+                            rows={2}
+                            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 8px', fontSize: 11.5, color: 'var(--text)', resize: 'vertical', fontFamily: 'inherit' }}
+                          />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => confirmSignOff(pi, s.key)}
+                              disabled={!signOffName.trim()}
+                              style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 6, padding: '5px 10px', color: 'var(--green)', fontSize: 11, opacity: signOffName.trim() ? 1 : 0.4 }}
+                            >
+                              Confirm sign-off
+                            </button>
+                            <button onClick={cancelSignOff} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', color: 'var(--text3)', fontSize: 11 }}>
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          className="no-print"
+                          onClick={() => openSignOff(pi, s.key)}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', fontSize: 10.5, color: 'var(--text3)', marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--border)', width: '100%' }}
+                      >
+                        <CheckCircle2 size={12} /> Sign off
+                      </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               {plan.managerBrief && (
                 <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '18px 22px' }}>
