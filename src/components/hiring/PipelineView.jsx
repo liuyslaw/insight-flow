@@ -88,9 +88,13 @@ export default function PipelineView() {
                 {inStage.map((c) => (
                   <div key={c.id} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+                    background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10,
                     padding: '12px 16px', flexWrap: 'wrap', gap: 10,
-                  }}>
+                    transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 220 }}>
                       <Users size={14} color="#16a34a" />
                       <div>
