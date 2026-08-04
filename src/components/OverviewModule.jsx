@@ -42,12 +42,16 @@ function StatCard({ label, value, accent }) {
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)'
         e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'
-        e.currentTarget.style.borderColor = 'var(--border-strong)'
+        e.currentTarget.style.borderRightColor = 'var(--border-strong)'
+        e.currentTarget.style.borderBottomColor = 'var(--border-strong)'
+        e.currentTarget.style.borderLeftColor = 'var(--border-strong)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'none'
         e.currentTarget.style.boxShadow = 'var(--shadow-card)'
-        e.currentTarget.style.borderColor = 'var(--border)'
+        e.currentTarget.style.borderRightColor = 'var(--border)'
+        e.currentTarget.style.borderBottomColor = 'var(--border)'
+        e.currentTarget.style.borderLeftColor = 'var(--border)'
       }}
     >
       <div style={{ fontSize: 24, fontWeight: 700, color: accent || 'var(--text)', marginBottom: 4, letterSpacing: -0.4 }}>{value}</div>
