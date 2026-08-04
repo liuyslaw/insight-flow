@@ -1,12 +1,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:       #111113;
-  --bg2:      #18181b;
-  --card:     #202024;
-  --card2:    #212125;
-  --border:   #35353c;
-  --border2:  #333338;
+  --bg:       #0c0c0e;
+  --bg2:      #17171b;
+  --card:     #1c1c22;
+  --card2:    #212128;
+  --border:   #34343e;
+  --border2:  #3d3d47;
+  --border-strong: #4a4a56;
   --text:     #e4e4e7;
   --text2:    #a1a1aa;
   --text3:    #8b8b93;
@@ -23,6 +24,14 @@
   --mono:     'DM Mono', 'Fira Code', monospace;
   --radius:   8px;
   --radius-lg: 12px;
+
+  /* Depth system — subtle gradients + layered shadows for card elevation */
+  --card-gradient:       linear-gradient(180deg, #232329 0%, #1a1a20 100%);
+  --card-gradient-hover: linear-gradient(180deg, #27272e 0%, #1d1d23 100%);
+  --sidebar-gradient:    linear-gradient(180deg, #19191e 0%, #121215 100%);
+  --shadow-card:       0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.4), 0 10px 28px -12px rgba(0,0,0,0.65);
+  --shadow-card-hover: 0 1px 0 rgba(255,255,255,0.07) inset, 0 2px 6px rgba(0,0,0,0.45), 0 18px 38px -12px rgba(0,0,0,0.7);
+  --shadow-sidebar:    6px 0 24px -14px rgba(0,0,0,0.65);
 }
 
 html, body, #root {
