@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Sparkles, RefreshCw, AlertTriangle, FileDown } from 'lucide-react'
 import { buildOfferLetterDocx } from '../../lib/buildOfferLetter.js'
+import { recordOfferLetter } from '../../data/hiringPipelineStore.js'
 
 export default function OfferLetterView() {
   const [candidateName, setCandidateName] = useState('')
@@ -26,7 +27,13 @@ export default function OfferLetterView() {
         body: JSON.stringify({ task: 'offer-letter', input }),
       })
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
-      setResult(await res.json())
+      const data = await res.json()
+      setResult(data)
+      try {
+        recordOfferLetter({ candidateName, role, letter: data.letter })
+      } catch {
+        // Pipeline tracking is best-effort — never block the drafted letter on it.
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')
     } finally { setLoading(false) }
