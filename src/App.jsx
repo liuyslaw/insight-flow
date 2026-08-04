@@ -45,8 +45,10 @@ export default function App() {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
         {/* Sidebar */}
         <aside style={{
-          width: 228, minWidth: 228, background: 'var(--bg2)',
+          width: 228, minWidth: 228, background: 'var(--sidebar-gradient)',
           borderRight: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sidebar)',
+          position: 'relative', zIndex: 1,
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           <div style={{ padding: '10px 10px 6px' }}>
@@ -63,15 +65,30 @@ export default function App() {
                   key={id}
                   onClick={() => setActive(id)}
                   style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '9px 8px', borderRadius: 6, border: 'none',
-                    background: isActive ? accentTint[accent] : 'none',
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+                    padding: '9px 10px 9px 9px', borderRadius: 7,
+                    border: 'none',
+                    borderLeft: isActive ? `3px solid ${accentVar[accent]}` : '3px solid transparent',
+                    background: isActive
+                      ? `linear-gradient(90deg, ${accentTint[accent]} 0%, rgba(255,255,255,0.015) 100%)`
+                      : 'none',
+                    boxShadow: isActive ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none',
                     color: isActive ? accentVar[accent] : 'var(--text2)',
-                    fontSize: 12.5, fontWeight: isActive ? 500 : 400,
+                    fontSize: 12.5, fontWeight: isActive ? 600 : 400,
                     marginBottom: 2, textAlign: 'left', transition: 'all 0.12s',
                   }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text)' }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text2)' }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = 'var(--text)'
+                      e.currentTarget.style.background = 'var(--card2)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.color = 'var(--text2)'
+                      e.currentTarget.style.background = 'none'
+                    }
+                  }}
                 >
                   <Icon size={14} />
                   <span style={{ flex: 1 }}>{label}</span>
