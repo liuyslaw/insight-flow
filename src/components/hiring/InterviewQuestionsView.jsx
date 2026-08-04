@@ -41,7 +41,7 @@ export default function InterviewQuestionsView() {
         questions, behavioural questions, and a competency scorecard for the interviewer.
       </p>
 
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Job description
         </div>
@@ -85,19 +85,19 @@ export default function InterviewQuestionsView() {
 
       {result && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
+          <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 20px' }}>
             <div style={{ fontSize: 10, color: '#16a34a', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>Technical / Role-Specific</div>
             <ol style={{ paddingLeft: 18, margin: 0 }}>
               {(result.technicalQuestions || []).map((q, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 7, lineHeight: 1.5 }}>{q}</li>)}
             </ol>
           </div>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
+          <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 20px' }}>
             <div style={{ fontSize: 10, color: 'var(--magenta)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>Behavioural</div>
             <ol style={{ paddingLeft: 18, margin: 0 }}>
               {(result.behaviouralQuestions || []).map((q, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text2)', marginBottom: 7, lineHeight: 1.5 }}>{q}</li>)}
             </ol>
           </div>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 20px' }}>
+          <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 20px' }}>
             <div style={{ fontSize: 10, color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>Scorecard Areas</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {(result.scorecardAreas || []).map((a, i) => (
