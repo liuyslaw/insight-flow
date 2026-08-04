@@ -63,7 +63,7 @@ export default function JobPostingView() {
         consistent with your job architecture), or describe a new role from scratch.
       </p>
 
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Role
         </div>
@@ -112,7 +112,7 @@ export default function JobPostingView() {
       )}
 
       {result && (
-        <div style={{ background: 'var(--card)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 10, padding: '20px 24px' }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid rgba(22,163,74,0.25)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{result.title}</span>
             <button onClick={copyText} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 7, padding: '6px 10px', color: 'var(--text2)', fontSize: 11 }}>
