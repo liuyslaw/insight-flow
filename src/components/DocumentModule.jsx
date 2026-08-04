@@ -112,7 +112,7 @@ export default function DocumentModule({ onChange }) {
       </div>
 
       {/* Add document */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 20 }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, marginBottom: 20 }}>
         <div style={{
           fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8,
           fontWeight: 600, padding: '12px 16px', borderBottom: '1px solid var(--border)',
@@ -207,9 +207,13 @@ export default function DocumentModule({ onChange }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {docs.map((doc) => (
           <div key={doc.id} style={{
-            background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
+            background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 8,
             padding: '12px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-          }}>
+            transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+          >
             <div style={{ minWidth: 0, display: 'flex', gap: 10 }}>
               <button
                 onClick={() => setViewingDoc(doc)}
@@ -278,7 +282,7 @@ export default function DocumentModule({ onChange }) {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+              background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10,
               width: '100%', maxWidth: 720, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
               boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
             }}
@@ -305,7 +309,7 @@ export default function DocumentModule({ onChange }) {
                       {[...viewingDoc.changeLog].reverse().map((entry, i) => (
                         <div key={i} style={{ fontSize: 11, color: 'var(--text3)' }}>
                           {entry.action} — {new Date(entry.at).toLocaleDateString('en-GB')} — {entry.by}
-                        </div>
+                      </div>
                       ))}
                     </div>
                   </div>
