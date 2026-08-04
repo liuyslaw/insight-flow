@@ -169,7 +169,7 @@ export default function OnboardingModule() {
       </p>
 
       {/* Selection */}
-      <div className="no-print" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div className="no-print" style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Who is this for? — select one or more
         </div>
@@ -269,7 +269,7 @@ export default function OnboardingModule() {
                   const signOffKey = `${pi}-${s.key}`
                   const isSignOffOpen = signOffOpen === signOffKey
                   return (
-                    <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
+                    <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 14 }}>
                       <div style={{ fontSize: 9.5, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 9 }}>
                         {s.label}
                       </div>
@@ -342,7 +342,7 @@ export default function OnboardingModule() {
                 })}
               </div>
               {plan.managerBrief && (
-                <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '18px 22px' }}>
+                <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '18px 22px' }}>
                   <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Sparkles size={11} color="var(--green)" /> Manager Brief
                   </div>
