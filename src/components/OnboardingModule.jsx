@@ -269,7 +269,7 @@ export default function OnboardingModule() {
                   const signOffKey = `${pi}-${s.key}`
                   const isSignOffOpen = signOffOpen === signOffKey
                   return (
-                    <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 14 }}>
+                    <div key={s.key} style={{ flex: '1 1 220px', minWidth: 200, background: 'var(--card-gradient)', border: '1px solid var(--border)', borderTop: '2px solid var(--green)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 14 }}>
                       <div style={{ fontSize: 9.5, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 9 }}>
                         {s.label}
                       </div>
