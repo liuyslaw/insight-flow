@@ -56,7 +56,7 @@ export default function OfferLetterView() {
         letterhead.
       </p>
 
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Details
         </div>
@@ -94,7 +94,7 @@ export default function OfferLetterView() {
       )}
 
       {result && (
-        <div style={{ background: 'var(--card)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 10, padding: '20px 24px' }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid rgba(22,163,74,0.25)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '20px 24px' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
             <button onClick={exportWord} disabled={exporting} style={{
               display: 'flex', alignItems: 'center', gap: 6, background: 'var(--card2)',
