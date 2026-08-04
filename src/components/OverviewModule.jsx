@@ -30,11 +30,12 @@ const roadmapItems = [
   { Icon: ShieldCheck, title: 'Compliance & audit logging', detail: 'Data residency handling for Singapore/EU/China, and a full audit trail of who viewed or uploaded what.' },
 ]
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, accent }) {
   return (
     <div
       style={{
         background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10,
+        borderTop: accent ? `2px solid ${accent}` : '1px solid var(--border)',
         padding: '16px 18px', boxShadow: 'var(--shadow-card)',
         transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
       }}
@@ -49,7 +50,7 @@ function StatCard({ label, value }) {
         e.currentTarget.style.borderColor = 'var(--border)'
       }}
     >
-      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 4, letterSpacing: -0.4 }}>{value}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: accent || 'var(--text)', marginBottom: 4, letterSpacing: -0.4 }}>{value}</div>
       <div style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', lineHeight: 1.4 }}>{label}</div>
     </div>
   )
@@ -85,11 +86,11 @@ export default function OverviewModule({ onNavigate }) {
   const businessUnits = new Set(currentRecords.map((r) => r.businessUnit).filter(Boolean)).size
 
   const stats = [
-    { label: 'Talent records (current)', value: currentRecords.length },
-    { label: 'Promotion candidates', value: promotionCandidates },
-    { label: 'With demographic data', value: withDemographics },
-    { label: 'Policy documents', value: policyCount },
-    { label: 'Onboarding templates', value: onboardingCount },
+    { label: 'Talent records (current)', value: currentRecords.length, accent: 'var(--magenta)' },
+    { label: 'Promotion candidates', value: promotionCandidates, accent: 'var(--blue)' },
+    { label: 'With demographic data', value: withDemographics, accent: 'var(--gold2)' },
+    { label: 'Policy documents', value: policyCount, accent: 'var(--green2)' },
+    { label: 'Onboarding templates', value: onboardingCount, accent: 'var(--green)' },
     { label: 'Business units covered', value: businessUnits },
   ]
 
@@ -113,7 +114,7 @@ export default function OverviewModule({ onNavigate }) {
       {/* Quick stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 26 }}>
         {stats.map((s) => (
-          <StatCard key={s.label} label={s.label} value={s.value} />
+          <StatCard key={s.label} label={s.label} value={s.value} accent={s.accent} />
         ))}
       </div>
 
