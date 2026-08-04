@@ -126,8 +126,8 @@ export default function AdminServicesModule() {
       <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Chat panel */}
         <div style={{
-          flex: '1 1 480px', minWidth: 320, background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: 10, display: 'flex', flexDirection: 'column', height: 480, overflow: 'hidden',
+          flex: '1 1 480px', minWidth: 320, background: 'var(--card-gradient)', border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)', borderRadius: 10, display: 'flex', flexDirection: 'column', height: 480, overflow: 'hidden',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, padding: '10px 16px',
@@ -226,7 +226,7 @@ export default function AdminServicesModule() {
         </p>
 
         {/* New request form */}
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 20 }}>
           <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
             New request
           </div>
@@ -277,8 +277,8 @@ export default function AdminServicesModule() {
             const isResponding = respondingId === r.id
             return (
               <div key={r.id} style={{
-                background: 'var(--card)', border: `1px solid ${s.urgency === 'overdue' ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`,
-                borderRadius: 10, padding: '14px 16px',
+                background: 'var(--card-gradient)', border: `1px solid ${s.urgency === 'overdue' ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`,
+                boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '14px 16px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <div style={{ flex: '1 1 280px', minWidth: 220 }}>
