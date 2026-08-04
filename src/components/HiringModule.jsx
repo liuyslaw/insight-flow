@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { UserCog, FileText, ScanSearch, MessagesSquare, Mail } from 'lucide-react'
+import { UserCog, FileText, ScanSearch, MessagesSquare, Mail, Kanban } from 'lucide-react'
 import JobPostingView from './hiring/JobPostingView.jsx'
 import CvScreeningView from './hiring/CvScreeningView.jsx'
 import InterviewQuestionsView from './hiring/InterviewQuestionsView.jsx'
 import OfferLetterView from './hiring/OfferLetterView.jsx'
+import PipelineView from './hiring/PipelineView.jsx'
 
 const tabs = [
   { id: 'posting', label: 'Job Posting', Icon: FileText },
   { id: 'screening', label: 'CV Screening', Icon: ScanSearch },
   { id: 'questions', label: 'Interview Questions', Icon: MessagesSquare },
   { id: 'offer', label: 'Offer Letter', Icon: Mail },
+  { id: 'pipeline', label: 'Pipeline', Icon: Kanban },
 ]
 
 export default function HiringModule() {
@@ -47,6 +49,7 @@ export default function HiringModule() {
       {tab === 'screening' && <CvScreeningView />}
       {tab === 'questions' && <InterviewQuestionsView />}
       {tab === 'offer' && <OfferLetterView />}
+      {tab === 'pipeline' && <PipelineView />}
     </div>
   )
 }
