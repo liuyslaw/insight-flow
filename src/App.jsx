@@ -12,13 +12,13 @@ import { getDocuments } from './data/documentStore.js'
 
 const accentVar = { white: 'var(--white)', gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24', green2: '#16a34a' }
 const accentTint = {
-  white: 'rgba(255,255,255,0.08)',
-  gold: 'rgba(245,158,11,0.1)',
-  magenta: 'rgba(184,68,128,0.1)',
-  blue: 'rgba(59,130,246,0.1)',
-  green: 'rgba(34,197,94,0.1)',
-  amber: 'rgba(251,191,36,0.1)',
-  green2: 'rgba(22,163,74,0.1)',
+  white: 'rgba(255,255,255,0.1)',
+  gold: 'rgba(245,158,11,0.14)',
+  magenta: 'rgba(184,68,128,0.16)',
+  blue: 'rgba(59,130,246,0.14)',
+  green: 'rgba(34,197,94,0.14)',
+  amber: 'rgba(251,191,36,0.14)',
+  green2: 'rgba(22,163,74,0.14)',
 }
 
 export default function App() {
@@ -53,7 +53,7 @@ export default function App() {
         }}>
           <div style={{ padding: '10px 10px 6px' }}>
             <div style={{
-              fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase',
+              fontSize: 9, color: 'var(--magenta-text)', textTransform: 'uppercase',
               letterSpacing: 0.8, padding: '4px 6px 6px', fontWeight: 600,
             }}>
               Modules
