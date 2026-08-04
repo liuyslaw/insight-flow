@@ -399,6 +399,7 @@ export default function WorkforceInsightsModule() {
             <button onClick={drillAttrition} style={{
               textAlign: 'left', flex: '1 1 200px', minWidth: 180, background: 'var(--card-gradient)',
               border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '14px 16px',
+              borderTop: `2px solid ${attritionColor}`,
               boxShadow: 'var(--shadow-card)', transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
