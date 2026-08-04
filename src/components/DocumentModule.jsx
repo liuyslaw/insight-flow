@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Upload, Trash2, RotateCcw, FileText, Table2, X, Copy, Check } from 'lucide-react'
-import { getDocuments, addDocument, removeDocument, resetToSample } from '../data/documentStore.js'
+import { getDocuments, addDocument, removeDocument, resetToSample, publishDocument, unpublishDocument } from '../data/documentStore.js'
 import { importFile, SUPPORTED_EXTENSIONS } from '../lib/fileImport.js'
 import { exportRowsToExcel } from '../lib/exportExcel.js'
 
@@ -9,6 +9,24 @@ const typeMeta = {
   policy: { label: 'Policy / admin', className: 'badge-blue' },
   onboarding: { label: 'Onboarding', className: 'badge-green' },
   training: { label: 'Training', className: 'badge-gold' },
+}
+
+const statusMeta = {
+  Draft: { label: 'Draft', color: 'var(--gold)', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.35)' },
+  Published: { label: 'Published', color: 'var(--green)', bg: 'rgba(34,197,94,0.12)', border: 'rgba(34,197,94,0.35)' },
+}
+
+function StatusPill({ status }) {
+  const meta = statusMeta[status] || statusMeta.Draft
+  return (
+    <span style={{
+      fontSize: 10.5, fontWeight: 600, color: meta.color, background: meta.bg,
+      border: `1px solid ${meta.border}`, borderRadius: 999, padding: '2px 8px',
+      textTransform: 'uppercase', letterSpacing: 0.4,
+    }}>
+      {meta.label}
+    </span>
+  )
 }
 
 export default function DocumentModule({ onChange }) {
@@ -38,11 +56,15 @@ export default function DocumentModule({ onChange }) {
     if (!title.trim() || !body.trim()) return
     refresh(addDocument({ title, type, body }))
     setTitle(''); setBody('')
-    setNotice(`Added "${title.trim()}" to the repository.`)
+    setNotice(`Added "${title.trim()}" to the repository as a draft — publish it when it's ready to go live.`)
     setTimeout(() => setNotice(null), 3000)
   }
 
   function handleRemove(id) { refresh(removeDocument(id)) }
+
+  function handlePublish(id) { refresh(publishDocument(id, { by: 'Lawrence Liu' })) }
+
+  function handleUnpublish(id) { refresh(unpublishDocument(id, { by: 'Lawrence Liu' })) }
 
   function handleReset() {
     refresh(resetToSample())
@@ -71,7 +93,7 @@ export default function DocumentModule({ onChange }) {
 
   function exportInventory() {
     const rows = docs.map((d) => ({
-      Title: d.title, Type: typeMeta[d.type]?.label || d.type, Source: d.source,
+      Title: d.title, Type: typeMeta[d.type]?.label || d.type, Status: d.status || 'Draft', Source: d.source,
       'Added At': new Date(d.addedAt).toLocaleDateString('en-GB'), 'Characters': d.body.length,
     }))
     exportRowsToExcel(rows, `HRinsight-Document-Inventory-${new Date().toISOString().slice(0, 10)}`, 'Repository')
@@ -84,7 +106,8 @@ export default function DocumentModule({ onChange }) {
         <p style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 560 }}>
           One place to bring in everything — job architecture exports, appraisal data, company
           policies, onboarding material. Tag each document on the way in; Talent Management and
-          Admin Services both read from this repository.
+          Admin Services both read from this repository. New documents start as drafts — publish
+          them once reviewed so they feed the rest of the app.
         </p>
       </div>
 
@@ -199,6 +222,7 @@ export default function DocumentModule({ onChange }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
                   <button onClick={() => setViewingDoc(doc)} style={{ background: 'none', fontSize: 13, color: 'var(--text)', fontWeight: 500, cursor: 'pointer' }}>{doc.title}</button>
                   <span className={`badge ${typeMeta[doc.type]?.className}`}>{typeMeta[doc.type]?.label || doc.type}</span>
+                  <StatusPill status={doc.status || 'Draft'} />
                   <span className="chip">{doc.source}</span>
                 </div>
                 <p style={{
@@ -207,9 +231,33 @@ export default function DocumentModule({ onChange }) {
                 }}>{doc.body}</p>
               </div>
             </div>
-            <button onClick={() => handleRemove(doc.id)} style={{ background: 'none', color: 'var(--red)', opacity: 0.7, flexShrink: 0 }}>
-              <Trash2 size={14} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+              {doc.status === 'Draft' && (
+                <button
+                  onClick={() => handlePublish(doc.id)}
+                  style={{
+                    background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)',
+                    borderRadius: 6, padding: '5px 10px', color: 'var(--green)', fontSize: 11, fontWeight: 500,
+                  }}
+                >
+                  Publish
+                </button>
+              )}
+              {doc.status === 'Published' && (
+                <button
+                  onClick={() => handleUnpublish(doc.id)}
+                  style={{
+                    background: 'var(--card2)', border: '1px solid var(--border)',
+                    borderRadius: 6, padding: '5px 10px', color: 'var(--text2)', fontSize: 11, fontWeight: 500,
+                  }}
+                >
+                  Unpublish
+                </button>
+              )}
+              <button onClick={() => handleRemove(doc.id)} style={{ background: 'none', color: 'var(--red)', opacity: 0.7, flexShrink: 0 }}>
+                <Trash2 size={14} />
+              </button>
+            </div>
           </div>
         ))}
         {docs.length === 0 && (
@@ -243,10 +291,25 @@ export default function DocumentModule({ onChange }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                   <span style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600 }}>{viewingDoc.title}</span>
                   <span className={`badge ${typeMeta[viewingDoc.type]?.className}`}>{typeMeta[viewingDoc.type]?.label || viewingDoc.type}</span>
+                  <StatusPill status={viewingDoc.status || 'Draft'} />
                 </div>
                 <span style={{ fontSize: 11, color: 'var(--text3)' }}>
                   {viewingDoc.source} · {viewingDoc.body.length.toLocaleString()} characters · added {new Date(viewingDoc.addedAt).toLocaleDateString('en-GB')}
                 </span>
+                {Array.isArray(viewingDoc.changeLog) && viewingDoc.changeLog.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 600, marginBottom: 4 }}>
+                      Change history
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {[...viewingDoc.changeLog].reverse().map((entry, i) => (
+                        <div key={i} style={{ fontSize: 11, color: 'var(--text3)' }}>
+                          {entry.action} — {new Date(entry.at).toLocaleDateString('en-GB')} — {entry.by}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <button onClick={() => setViewingDoc(null)} style={{ background: 'none', flexShrink: 0 }}>
                 <X size={18} color="var(--text3)" />
