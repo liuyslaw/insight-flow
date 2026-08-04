@@ -30,6 +30,10 @@ export function parseTalentRecords(text) {
   for (const block of blocks) {
     const site = block.match(/SITE:\s*(.+)/)?.[1]?.trim()
     const employee = block.match(/EMPLOYEE:\s*(.+)/)?.[1]?.trim()
+    // Optional explicit identifier — not every export will carry one yet, so
+    // everything below still falls back to matching on the EMPLOYEE name
+    // string when employeeId is absent. See computeTalentMovement.
+    const employeeId = block.match(/EMPLOYEE ID:\s*(\S+)/i)?.[1]?.trim()
     const role = block.match(/ROLE:\s*(.+)/)?.[1]?.trim()
     const businessUnit = block.match(/BUSINESS UNIT:\s*(.+)/)?.[1]?.trim()
     const level = block.match(/ASSIGNED LEVEL:\s*(L?\d+)/i)?.[1]?.trim()
@@ -47,6 +51,7 @@ export function parseTalentRecords(text) {
     records.push({
       site: site || 'Unknown site',
       employee: employee || null,
+      employeeId: employeeId || null,
       role: role || 'Unknown role',
       businessUnit: businessUnit || null,
       level: level ? (level.startsWith('L') ? level : `L${level}`) : 'Unknown',
@@ -112,16 +117,19 @@ export function countByTenureBucket(records) {
  * Talent Movement — compares each currently-active employee's rating this
  * cycle vs. the immediately prior cycle to classify direction of travel,
  * rather than judging on a single static threshold.
- * Matches employees across cycles by the EMPLOYEE field text, since that's
- * the only stable identity we carry today (no employee ID field yet).
+ * Matches employees across cycles by employeeId when present (stable,
+ * collision-proof); falls back to the EMPLOYEE name-string when a record
+ * has no employeeId, so this keeps working unchanged on data exports that
+ * predate the identifier being added.
  */
 export function computeTalentMovement(allActiveRecords, currentYear, previousYear) {
+  const keyOf = (r) => r.employeeId || r.employee
   const current = allActiveRecords.filter((r) => r.appraisalCycle === currentYear)
   const previous = allActiveRecords.filter((r) => r.appraisalCycle === previousYear)
-  const prevByEmployee = new Map(previous.filter((r) => r.employee).map((r) => [r.employee, r]))
+  const prevByEmployee = new Map(previous.filter((r) => keyOf(r)).map((r) => [keyOf(r), r]))
 
   return current.map((r) => {
-    const prev = r.employee ? prevByEmployee.get(r.employee) : null
+    const prev = keyOf(r) ? prevByEmployee.get(keyOf(r)) : null
     if (!prev || prev.rating == null || r.rating == null) {
       return { ...r, previousRating: null, delta: null, category: 'No prior data' }
     }
@@ -135,7 +143,7 @@ export function computeTalentMovement(allActiveRecords, currentYear, previousYea
 }
 /**
  * Attrition rate for a given cycle, defined here as:
- *   leavers in that cycle ÷ (active + leavers in that cycle) × 100
+ * leavers in that cycle ÷ (active + leavers in that cycle) × 100
  * A simplified proxy suitable for a phase-1 demo — not official HR
  * methodology (which typically uses average headcount over the period).
  * Stated explicitly wherever this number is shown in the UI.
