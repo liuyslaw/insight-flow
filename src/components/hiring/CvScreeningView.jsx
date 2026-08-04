@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react'
 import { Sparkles, RefreshCw, AlertTriangle, Upload, X, ShieldCheck } from 'lucide-react'
 import { importFile, SUPPORTED_EXTENSIONS } from '../../lib/fileImport.js'
 import { getUniqueRolesWithJD, formatRoleAsJD } from '../../lib/getUniqueRoles.js'
+import { addOrUpdateCandidateFromScreening } from '../../data/hiringPipelineStore.js'
+
+function deriveRoleName(roleSelection, existingRoles, jdText) {
+  if (roleSelection !== '' && roleSelection !== 'custom') {
+    const role = existingRoles[Number(roleSelection)]
+    if (role && role.role) return role.role
+  }
+  const firstLine = (jdText || '').split('\n').map((l) => l.trim()).find((l) => l.length > 0)
+  if (firstLine) return firstLine.slice(0, 80)
+  return 'Unspecified role'
+}
 
 export default function CvScreeningView() {
   const [existingRoles, setExistingRoles] = useState([])
@@ -48,6 +59,18 @@ export default function CvScreeningView() {
     })
     if (!res.ok) throw new Error(`Request failed (${res.status})`)
     const data = await res.json()
+    try {
+      const role = deriveRoleName(roleSelection, existingRoles, jdText)
+      addOrUpdateCandidateFromScreening({
+        name: cv.name,
+        role,
+        matches: data.matches,
+        gaps: data.gaps,
+        notes: data.notes,
+      })
+    } catch {
+      // Pipeline tracking is best-effort — never block a screening result on it.
+    }
     return { name: cv.name, ...data }
   }
 
