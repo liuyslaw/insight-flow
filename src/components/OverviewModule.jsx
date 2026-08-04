@@ -30,6 +30,31 @@ const roadmapItems = [
   { Icon: ShieldCheck, title: 'Compliance & audit logging', detail: 'Data residency handling for Singapore/EU/China, and a full audit trail of who viewed or uploaded what.' },
 ]
 
+function StatCard({ label, value }) {
+  return (
+    <div
+      style={{
+        background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10,
+        padding: '16px 18px', boxShadow: 'var(--shadow-card)',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)'
+        e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'
+        e.currentTarget.style.borderColor = 'var(--border-strong)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'none'
+        e.currentTarget.style.boxShadow = 'var(--shadow-card)'
+        e.currentTarget.style.borderColor = 'var(--border)'
+      }}
+    >
+      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', marginBottom: 4, letterSpacing: -0.4 }}>{value}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 500, color: 'var(--text3)', lineHeight: 1.4 }}>{label}</div>
+    </div>
+  )
+}
+
 export default function OverviewModule({ onNavigate }) {
   const [docs, setDocs] = useState([])
   const [talentDocs, setTalentDocs] = useState([])
@@ -73,6 +98,7 @@ export default function OverviewModule({ onNavigate }) {
       <div style={{
         background: 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(184,68,128,0.08))',
         border: '1px solid var(--border)', borderRadius: 12, padding: '26px 28px', marginBottom: 24,
+        boxShadow: 'var(--shadow-card)',
       }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>
           HRinsight — HR Intelligence Layer
@@ -85,12 +111,9 @@ export default function OverviewModule({ onNavigate }) {
       </div>
 
       {/* Quick stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 26 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 26 }}>
         {stats.map((s) => (
-          <div key={s.label} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 9, padding: '14px 16px' }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>{s.value}</div>
-            <div style={{ fontSize: 10.5, color: 'var(--text3)', lineHeight: 1.4 }}>{s.label}</div>
-          </div>
+          <StatCard key={s.label} label={s.label} value={s.value} />
         ))}
       </div>
 
@@ -100,13 +123,33 @@ export default function OverviewModule({ onNavigate }) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginBottom: 28 }}>
         {moduleCards.map((m) => (
-          <button key={m.id} onClick={() => onNavigate?.(m.id)} style={{
-            textAlign: 'left', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
-            padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10,
-          }}>
+          <button
+            key={m.id}
+            onClick={() => onNavigate?.(m.id)}
+            style={{
+              textAlign: 'left', background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10,
+              padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10,
+              boxShadow: 'var(--shadow-card)',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'
+              e.currentTarget.style.borderColor = m.color
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none'
+              e.currentTarget.style.boxShadow = 'var(--shadow-card)'
+              e.currentTarget.style.borderColor = 'var(--border)'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: m.tint, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: 8, background: m.tint,
+                  border: `1px solid ${m.color}33`, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
                   <m.Icon size={14} color={m.color} />
                 </div>
                 <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{m.label}</span>
@@ -122,7 +165,7 @@ export default function OverviewModule({ onNavigate }) {
       <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
         What's Next — Phase 2
       </div>
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '4px 18px' }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10, padding: '4px 18px', boxShadow: 'var(--shadow-card)' }}>
         {roadmapItems.map((r, i) => (
           <div key={r.title} style={{
             display: 'flex', gap: 12, padding: '14px 0',
