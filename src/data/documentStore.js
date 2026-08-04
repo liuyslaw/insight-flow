@@ -78,7 +78,11 @@ export function getDocuments() {
       return seeded
     }
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length ? parsed : seedDocs()
+    const docs = Array.isArray(parsed) && parsed.length ? parsed : seedDocs()
+    // Backward compatibility: documents saved before the draft/publish feature
+    // shipped don't have a status field. Treat those as already published so
+    // they don't silently vanish from getDocumentsByType() callers.
+    return docs.map((d) => (d.status ? d : { ...d, status: 'Published' }))
   } catch {
     return seedDocs()
   }
