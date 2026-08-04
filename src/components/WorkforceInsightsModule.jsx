@@ -24,10 +24,15 @@ const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
 
 function ChartCard({ title, total, totalLabel, children }) {
   return (
-    <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
-      padding: '16px 18px', flex: '1 1 320px', minWidth: 280,
-    }}>
+    <div
+      style={{
+        background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10,
+        padding: '16px 18px', flex: '1 1 320px', minWidth: 280,
+        boxShadow: 'var(--shadow-card)', transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>{title}</div>
         {(total != null || totalLabel) && (
@@ -381,7 +386,7 @@ export default function WorkforceInsightsModule() {
       </div>
 
       {records.length === 0 && (
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
+        <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '48px 32px', textAlign: 'center' }}>
           <Users size={26} color="var(--border2)" style={{ marginBottom: 12 }} />
           <div style={{ fontSize: 13.5, color: 'var(--text3)' }}>No talent data matches the current selection</div>
         </div>
@@ -392,9 +397,13 @@ export default function WorkforceInsightsModule() {
           {/* Attrition stat strip */}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 4 }}>
             <button onClick={drillAttrition} style={{
-              textAlign: 'left', flex: '1 1 200px', minWidth: 180, background: 'var(--card)',
+              textAlign: 'left', flex: '1 1 200px', minWidth: 180, background: 'var(--card-gradient)',
               border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '14px 16px',
-            }}>
+              boxShadow: 'var(--shadow-card)', transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow-card)' }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <TrendingDown size={13} color={attritionColor} />
                 <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
@@ -537,17 +546,17 @@ export default function WorkforceInsightsModule() {
           )}
 
           {drill && (
-            <div className="no-print" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 20, marginTop: 14 }}>
+            <div className="no-print" style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 20, marginTop: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Users size={13} color="var(--text3)" />
                   <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
                     {drill.label} — {drill.matches.length} record{drill.matches.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-                <button onClick={() => setDrill(null)} style={{ background: 'none' }}><X size={14} color="var(--text3)" /></button>
+                </span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 240, overflowY: 'auto' }}>
+              <button onClick={() => setDrill(null)} style={{ background: 'none' }}><X size={14} color="var(--text3)" /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 240, overflowY: 'auto' }}>
                 {drill.matches.map((r, i) => (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -596,7 +605,7 @@ export default function WorkforceInsightsModule() {
             <div className="no-print" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 9, padding: '12px 16px', marginBottom: 12, display: 'flex', gap: 8 }}>
               <AlertTriangle size={14} color="var(--red)" />
               <span style={{ fontSize: 12.5, color: 'var(--red)' }}>{summaryError}</span>
-            </div>
+          </div>
           )}
 
           {summary ? (
