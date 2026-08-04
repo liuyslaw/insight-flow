@@ -10,6 +10,10 @@ export function parseTrainingRecords(text) {
 
   for (const block of blocks) {
     const employee = block.match(/EMPLOYEE:\s*(.+)/)?.[1]?.trim()
+    // Optional explicit identifier, same convention as parseTalentDocs.js —
+    // absent on exports that predate the identifier being added, in which
+    // case callers should fall back to matching on the EMPLOYEE name string.
+    const employeeId = block.match(/EMPLOYEE ID:\s*(\S+)/i)?.[1]?.trim()
     const course = block.match(/COURSE:\s*(.+)/)?.[1]?.trim()
     const status = block.match(/STATUS:\s*(Completed|In Progress|Not Started)/i)?.[1]?.trim()
     const completionDate = block.match(/COMPLETION DATE:\s*(.+)/i)?.[1]?.trim()
@@ -18,6 +22,7 @@ export function parseTrainingRecords(text) {
 
     records.push({
       employee: employee || 'Unknown',
+      employeeId: employeeId || null,
       course: course || 'Unknown course',
       status: status || 'Not Started',
       completionDate: completionDate || null,
