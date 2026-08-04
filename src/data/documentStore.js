@@ -26,39 +26,46 @@ MONTH 2-3: Take ownership of first independent task or project, mid-probation re
 ]
 
 function seedDocs() {
+  const addedAt = new Date().toISOString()
+  const publish = (doc) => ({
+    ...doc,
+    status: 'Published',
+    changeLog: [{ action: 'Published', at: doc.addedAt, by: 'Sample data' }],
+  })
+
   return [
-    {
+    publish({
       id: 'seed-talent-sample',
       title: 'Sample talent export — 50 employees (SG / MY / EU / CN)',
       type: 'talent',
       body: sampleTalentDocs,
       source: 'Sample data',
-      addedAt: new Date().toISOString(),
-    },
-    ...defaultPolicies.map((p, i) => ({
+      addedAt,
+    }),
+    ...defaultPolicies.map((p, i) => publish({
       id: `seed-policy-${i}`,
       title: p.title,
       type: 'policy',
       body: p.body,
       source: 'Sample data',
-      addedAt: new Date().toISOString(),
+      addedAt,
     })),
-    ...sampleOnboardingTemplates.map((t, i) => ({
+    ...sampleOnboardingTemplates.map((t, i) => publish({
       id: `seed-onboarding-${i}`,
       title: t.title,
       type: 'onboarding',
       body: t.body,
       source: 'Sample data',
-      addedAt: new Date().toISOString(),
+      addedAt,
     })),
-    {
+    publish({
       id: 'seed-training-sample',
       title: 'Sample training & certification records — 56 assignments',
       type: 'training',
       body: sampleTrainingDocs,
       source: 'Sample data',
-      addedAt: new Date().toISOString(),
-    },
+      addedAt,
+    }),
   ]
 }
 
@@ -77,19 +84,27 @@ export function getDocuments() {
   }
 }
 
+// Only published documents are "live" for the rest of the app — drafts sit
+// in the repository awaiting review and must not feed the AI assistant,
+// onboarding plans, or any other module until someone explicitly publishes
+// them.
 export function getDocumentsByType(type) {
-  return getDocuments().filter((d) => d.type === type)
+  return getDocuments().filter((d) => d.type === type && d.status === 'Published')
 }
 
-export function addDocument({ title, type, body, source }) {
+export function addDocument({ title, type, body, source, status }) {
   const docs = getDocuments()
+  const addedAt = new Date().toISOString()
+  const resolvedSource = source || 'Uploaded'
   const doc = {
     id: `doc-${Date.now()}`,
     title: title.trim(),
     type,
     body: body.trim(),
-    source: source || 'Uploaded',
-    addedAt: new Date().toISOString(),
+    source: resolvedSource,
+    addedAt,
+    status: status || 'Draft',
+    changeLog: [{ action: 'Created', at: addedAt, by: resolvedSource }],
   }
   const next = [...docs, doc]
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
@@ -98,6 +113,34 @@ export function addDocument({ title, type, body, source }) {
 
 export function removeDocument(id) {
   const docs = getDocuments().filter((d) => d.id !== id)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(docs))
+  return docs
+}
+
+export function publishDocument(id, { by } = {}) {
+  const docs = getDocuments().map((d) =>
+    d.id === id
+      ? {
+          ...d,
+          status: 'Published',
+          changeLog: [...(d.changeLog || []), { action: 'Published', at: new Date().toISOString(), by: by || 'Unknown' }],
+        }
+      : d
+  )
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(docs))
+  return docs
+}
+
+export function unpublishDocument(id, { by } = {}) {
+  const docs = getDocuments().map((d) =>
+    d.id === id
+      ? {
+          ...d,
+          status: 'Draft',
+          changeLog: [...(d.changeLog || []), { action: 'Unpublished', at: new Date().toISOString(), by: by || 'Unknown' }],
+        }
+      : d
+  )
   localStorage.setItem(STORAGE_KEY, JSON.stringify(docs))
   return docs
 }
