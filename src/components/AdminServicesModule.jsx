@@ -126,7 +126,7 @@ export default function AdminServicesModule() {
       <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', flexWrap: 'wrap' }}>
         {/* Chat panel */}
         <div style={{
-          flex: '1 1 480px', minWidth: 320, background: 'var(--card-gradient)', border: '1px solid var(--border)',
+          flex: '1 1 480px', minWidth: 320, background: 'var(--card-gradient)', border: '1px solid var(--border)', borderTop: '2px solid var(--blue)',
           boxShadow: 'var(--shadow-card)', borderRadius: 10, display: 'flex', flexDirection: 'column', height: 480, overflow: 'hidden',
         }}>
           <div style={{
