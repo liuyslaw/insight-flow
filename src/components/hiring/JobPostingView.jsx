@@ -63,7 +63,7 @@ export default function JobPostingView() {
         consistent with your job architecture), or describe a new role from scratch.
       </p>
 
-      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', borderTop: '2px solid #16a34a', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Role
         </div>
