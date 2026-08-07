@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FileText, Users, Activity, UserPlus, Headset, ArrowRight, Database, Server, Bell, Link2, ShieldCheck, Building2 } from 'lucide-react'
+import { FileText, Users, Activity, UserPlus, Headset, ArrowRight } from 'lucide-react'
 import { getDocuments, getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords } from '../lib/parseTalentDocs.js'
-
 const moduleCards = [
   {
     id: 'talent', label: 'Talent Management', Icon: Users, color: 'var(--magenta)', tint: 'rgba(184,68,128,0.1)',
@@ -20,14 +19,6 @@ const moduleCards = [
     id: 'admin', label: 'Admin Services', Icon: Headset, color: 'var(--blue)', tint: 'rgba(59,130,246,0.1)',
     desc: 'Answer generic employee HR questions instantly from the policy repository.',
   },
-]
-
-const roadmapItems = [
-  { Icon: Database, title: 'Persistent database + authentication', detail: 'Move off browser-local storage so records survive across devices and users, with role-based logins (employee / manager / HR admin).' },
-  { Icon: UserPlus, title: 'Live onboarding tracking', detail: 'New hires check off their own onboarding tasks as they complete them; managers see real-time progress instead of a static plan.' },
-  { Icon: Bell, title: 'Notifications', detail: 'Email/Teams nudges for overdue onboarding steps or pending reviews — makes the tracking actually save time, not just display it.' },
-  { Icon: Link2, title: 'Direct system integration', detail: 'Optional direct connection to Workday and other systems, once the manual-upload workflow has proven its value.' },
-  { Icon: ShieldCheck, title: 'Compliance & audit logging', detail: 'Data residency handling for Singapore/EU/China, and a full audit trail of who viewed or uploaded what.' },
 ]
 
 function StatCard({ label, value, accent }) {
@@ -166,24 +157,6 @@ export default function OverviewModule({ onNavigate }) {
         ))}
       </div>
 
-      {/* Roadmap */}
-      <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
-        What's Next — Phase 2
-      </div>
-      <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 10, padding: '4px 18px', boxShadow: 'var(--shadow-card)' }}>
-        {roadmapItems.map((r, i) => (
-          <div key={r.title} style={{
-            display: 'flex', gap: 12, padding: '14px 0',
-            borderBottom: i < roadmapItems.length - 1 ? '1px solid var(--border)' : 'none',
-          }}>
-            <r.Icon size={15} color="var(--text3)" style={{ marginTop: 2, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text2)', marginBottom: 3 }}>{r.title}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text3)', lineHeight: 1.6 }}>{r.detail}</div>
-            </div>
           </div>
-        ))}
-      </div>
-    </div>
   )
 }
