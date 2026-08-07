@@ -75,15 +75,40 @@ export default function DocumentModule({ onChange }) {
   const [importing, setImporting] = useState(false)
 
   async function handleFile(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
     setImporting(true)
     try {
-      const text = await importFile(file, type)
-      if (!title.trim()) setTitle(file.name.replace(/\.[^/.]+$/, ''))
-      setBody(text)
-    } catch (err) {
-      setNotice(`Could not read "${file.name}" — try a different file or paste the content directly.`)
+      if (files.length === 1) {
+        const file = files[0]
+        try {
+          const text = await importFile(file, type)
+          if (!title.trim()) setTitle(file.name.replace(/\.[^/.]+$/, ''))
+          setBody(text)
+        } catch (err) {
+          setNotice(`Could not read "${file.name}" — try a different file or paste the content directly.`)
+          setTimeout(() => setNotice(null), 4000)
+        }
+        return
+      }
+      const results = await Promise.allSettled(
+        files.map(async (file) => ({ name: file.name, text: await importFile(file, type) }))
+      )
+      let next = docs
+      let addedCount = 0
+      results.forEach((r) => {
+        if (r.status === 'fulfilled') {
+          next = addDocument({ title: r.value.name.replace(/\.[^/.]+$/, ''), type, body: r.value.text })
+          addedCount += 1
+        }
+      })
+      const failedCount = results.length - addedCount
+      if (addedCount) refresh(next)
+      setNotice(
+        addedCount
+          ? `Added ${addedCount} document${addedCount === 1 ? '' : 's'} to the repository as drafts${failedCount ? ` — ${failedCount} failed to import` : ''}. Publish them when ready to go live.`
+          : 'Could not read the selected files — try different files or paste the content directly.'
+      )
       setTimeout(() => setNotice(null), 4000)
     } finally {
       setImporting(false)
@@ -162,8 +187,8 @@ export default function DocumentModule({ onChange }) {
               display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500,
               color: 'var(--gold)', cursor: importing ? 'default' : 'pointer', opacity: importing ? 0.6 : 1,
             }}>
-              <Upload size={13} /> {importing ? 'Reading file…' : 'Upload file (.docx, .xlsx, .pdf, .txt)'}
-              <input type="file" accept={SUPPORTED_EXTENSIONS} onChange={handleFile} disabled={importing} style={{ display: 'none' }} />
+              <Upload size={13} /> {importing ? 'Reading file(s)…' : 'Upload files (.docx, .xlsx, .pdf, .txt)'}
+              <input type="file" accept={SUPPORTED_EXTENSIONS} onChange={handleFile} disabled={importing} multiple style={{ display: 'none' }} />
             </label>
             <button
               onClick={handleAdd}
