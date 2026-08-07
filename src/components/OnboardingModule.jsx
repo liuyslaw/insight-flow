@@ -169,7 +169,7 @@ export default function OnboardingModule() {
       </p>
 
       {/* Selection */}
-      <div className="no-print" style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
+      <div className="no-print" style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', borderTop: '2px solid var(--green)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
           Who is this for? — select one or more
         </div>
