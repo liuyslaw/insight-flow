@@ -33,6 +33,8 @@ export default function DocumentModule({ onChange }) {
   const [docs, setDocs] = useState([])
   const [title, setTitle] = useState('')
   const [type, setType] = useState('talent')
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [body, setBody] = useState('')
   const [notice, setNotice] = useState(null)
   const [viewingDoc, setViewingDoc] = useState(null)
@@ -124,6 +126,13 @@ export default function DocumentModule({ onChange }) {
     exportRowsToExcel(rows, `HRinsight-Document-Inventory-${new Date().toISOString().slice(0, 10)}`, 'Repository')
   }
 
+  const filteredDocs = docs.filter((d) => {
+    const matchesType = typeFilter === 'all' || d.type === typeFilter
+    const q = search.trim().toLowerCase()
+    const matchesSearch = !q || d.title.toLowerCase().includes(q) || (d.body || '').toLowerCase().includes(q)
+    return matchesType && matchesSearch
+  })
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 860 }}>
       <div style={{ marginBottom: 22 }}>
@@ -208,9 +217,9 @@ export default function DocumentModule({ onChange }) {
       </div>
 
       {/* Repository list */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 10 }}>
         <span style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600 }}>
-          Repository — {docs.length} document{docs.length === 1 ? '' : 's'}
+          Repository — {filteredDocs.length === docs.length ? `${docs.length} document${docs.length === 1 ? '' : 's'}` : `${filteredDocs.length} of ${docs.length} documents`}
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           {docs.length > 0 && (
@@ -229,36 +238,54 @@ export default function DocumentModule({ onChange }) {
           </button>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {docs.map((doc) => (
+      {docs.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by title or content…"
+            style={{ flex: '1 1 220px', minWidth: 180, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 12px', fontSize: 12, color: 'var(--text)' }}
+          />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 10px', fontSize: 12, color: 'var(--text)' }}
+          >
+            <option value="all">All types</option>
+            <option value="talent">Talent data</option>
+            <option value="policy">Policy / admin</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="training">Training</option>
+          </select>
+          {(search.trim() || typeFilter !== 'all') && (
+            <button onClick={() => { setSearch(''); setTypeFilter('all') }} style={{ background: 'none', fontSize: 11, color: 'var(--text3)', padding: '7px 4px' }}>
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {filteredDocs.map((doc) => (
           <div key={doc.id} style={{
             background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 8,
-            padding: '12px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
-            transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card-hover)'; e.currentTarget.style.borderColor = 'var(--border-strong)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-card)'; e.currentTarget.style.borderColor = 'var(--border)' }}
-          >
-            <div style={{ minWidth: 0, display: 'flex', gap: 10 }}>
+            padding: '9px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 8, flex: 1, overflow: 'hidden' }}>
               <button
                 onClick={() => setViewingDoc(doc)}
                 title="View full document"
-                style={{ background: 'none', marginTop: 2, flexShrink: 0, cursor: 'pointer', borderRadius: 4 }}
+                style={{ background: 'none', flexShrink: 0, cursor: 'pointer', borderRadius: 4, display: 'flex' }}
               >
                 <FileText size={14} color="var(--gold)" />
               </button>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
-                  <button onClick={() => setViewingDoc(doc)} style={{ background: 'none', fontSize: 13, color: 'var(--text)', fontWeight: 500, cursor: 'pointer' }}>{doc.title}</button>
-                  <span className={`badge ${typeMeta[doc.type]?.className}`}>{typeMeta[doc.type]?.label || doc.type}</span>
-                  <StatusPill status={doc.status || 'Draft'} />
-                  <span className="chip">{doc.source}</span>
-                </div>
-                <p style={{
-                  fontSize: 11.5, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis',
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                }}>{doc.body}</p>
-              </div>
+              <button
+                onClick={() => setViewingDoc(doc)}
+                title={doc.title}
+                style={{ background: 'none', fontSize: 13, color: 'var(--text)', fontWeight: 500, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280, flexShrink: 1 }}
+              >{doc.title}</button>
+              <span className={`badge ${typeMeta[doc.type]?.className}`} style={{ flexShrink: 0 }}>{typeMeta[doc.type]?.label || doc.type}</span>
+              <StatusPill status={doc.status || 'Draft'} />
+              <span className="chip" style={{ flexShrink: 0 }}>{doc.source}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
               {doc.status === 'Draft' && (
@@ -289,6 +316,11 @@ export default function DocumentModule({ onChange }) {
             </div>
           </div>
         ))}
+        {filteredDocs.length === 0 && docs.length > 0 && (
+          <p style={{ fontSize: 13, color: 'var(--text3)', fontStyle: 'italic', padding: '20px 0' }}>
+            No documents match your search — try a different keyword or clear the filter.
+          </p>
+        )}
         {docs.length === 0 && (
           <p style={{ fontSize: 13, color: 'var(--text3)', fontStyle: 'italic', padding: '20px 0' }}>
             Repository is empty — add a document above, or reset to the sample set.
