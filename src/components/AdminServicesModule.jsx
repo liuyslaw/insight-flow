@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Headset, Send, FileText, FileDown, MessageSquare, CalendarClock, Plus, CheckCircle2, XCircle } from 'lucide-react'
+import { Headset, Send, FileText, FileDown, MessageSquare, CalendarClock, Plus, CheckCircle2, XCircle, Library } from 'lucide-react'
 import { getDocumentsByType } from '../data/documentStore.js'
 import { buildChatTranscriptDocx } from '../lib/buildChatTranscript.js'
 import { getFwaRequests, addFwaRequest, respondToFwaRequest, getFwaStatus } from '../data/fwaStore.js'
+import { retrieveChunks } from '../lib/retrieval.js'
 
 const starterQuestions = [
   'How many days of annual leave do I get?',
@@ -37,13 +38,23 @@ export default function AdminServicesModule() {
     setMessages((m) => [...m, { role: 'user', content: text }])
     setInput(''); setLoading(true)
     try {
+      // Retrieve only the passages relevant to this question instead of
+      // sending every published policy in full — see ../lib/retrieval.js
+      // for why: a 30-50 page handbook sent whole would blow Groq's
+      // rate limit on a single question.
+      const { chunks, sourceTitles, usedChunkCount, totalChunkCount } = retrieveChunks(policyDocs, text)
+      const context = chunks.map((c) => ({ title: c.docTitle, body: c.text }))
+
       const res = await fetch('/api/assistant', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: text, context: policyDocs.map((d) => ({ title: d.title, body: d.body })) }),
+        body: JSON.stringify({ question: text, context }),
       })
       if (!res.ok) throw new Error(`Request failed (${res.status})`)
       const data = await res.json()
-      setMessages((m) => [...m, { role: 'assistant', content: data.answer }])
+      setMessages((m) => [...m, {
+        role: 'assistant', content: data.answer,
+        sources: sourceTitles, retrievalNote: `${usedChunkCount} of ${totalChunkCount} passages consulted`,
+      }])
     } catch (err) {
       setMessages((m) => [...m, { role: 'assistant', content: "Couldn't reach the assistant just now — try again in a moment." }])
     } finally { setLoading(false) }
@@ -150,12 +161,21 @@ export default function AdminServicesModule() {
           </div>
           <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '82%', borderRadius: 10, padding: '9px 13px', fontSize: 13, lineHeight: 1.6,
                   background: m.role === 'user' ? 'var(--card2)' : 'rgba(59,130,246,0.08)',
                   color: m.role === 'user' ? 'var(--text)' : 'var(--text2)',
                 }}>{m.content}</div>
+                {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, maxWidth: '82%',
+                    fontSize: 10.5, color: 'var(--text3)',
+                  }}>
+                    <Library size={10} />
+                    <span>{m.sources.join(' · ')} ({m.retrievalNote})</span>
+                  </div>
+                )}
               </div>
             ))}
             {loading && (
