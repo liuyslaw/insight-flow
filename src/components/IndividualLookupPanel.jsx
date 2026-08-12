@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Search, ArrowLeft, User, GraduationCap, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Search, ArrowLeft, User, GraduationCap, TrendingUp, TrendingDown, Minus, UserPlus } from 'lucide-react'
+import { getEmployees } from '../data/employeeStore.js'
 
 const ratingColor = { 1: 'var(--red)', 2: 'var(--gold)', 3: 'var(--text2)', 4: 'var(--blue)', 5: 'var(--green)' }
 const ratingLabel = { 1: 'Well Below', 2: 'Below Expectations', 3: 'Meets Expectations', 4: 'Exceeds Expectations', 5: 'Outstanding' }
 const statusColor = { Completed: 'var(--green)', 'In Progress': 'var(--gold)', 'Not Started': 'var(--text3)' }
+const MAX_RESULTS = 8
 
 function identityKey(r) {
   return r.employeeId || r.employee
@@ -13,6 +15,10 @@ function identityKey(r) {
  * Collapses the full multi-cycle record set into one row per unique
  * person, keeping only their most recent appraisal cycle for the
  * search/results list — clicking through still shows their full history.
+ * People from the shared employee roster (hired via the Hiring pipeline,
+ * or added directly in Onboarding) who don't have an appraisal record yet
+ * are merged in too, so a brand-new hire is searchable here immediately
+ * instead of being invisible until their first appraisal cycle.
  */
 function uniquePeople(allRecords) {
   const byKey = new Map()
@@ -24,6 +30,16 @@ function uniquePeople(allRecords) {
       byKey.set(key, r)
     }
   }
+  for (const e of getEmployees()) {
+    const key = e.name
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        employee: e.name, employeeId: null, role: e.role, level: e.level || 'Unassigned',
+        site: e.site || 'Unassigned', rating: null, narrative: null, appraisalCycle: null,
+        status: 'Active', noAppraisalYet: true, rosterSource: e.source,
+      })
+    }
+  }
   return [...byKey.values()]
 }
 
@@ -33,13 +49,15 @@ export default function IndividualLookupPanel({ allRecords, trainingRecords }) {
 
   const people = useMemo(() => uniquePeople(allRecords), [allRecords])
 
-  const results = useMemo(() => {
+  const allMatches = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return people
+    if (!q) return []
     return people.filter(
       (p) => p.employee.toLowerCase().includes(q) || p.role.toLowerCase().includes(q) || p.site.toLowerCase().includes(q)
     )
   }, [people, query])
+  const results = allMatches.slice(0, MAX_RESULTS)
+  const truncatedCount = allMatches.length - results.length
 
   const selected = selectedKey ? people.find((p) => identityKey(p) === selectedKey) : null
 
@@ -96,7 +114,7 @@ export default function IndividualLookupPanel({ allRecords, trainingRecords }) {
         </div>
 
         {/* Current rating + narrative */}
-        {selected.rating && (
+        {selected.rating ? (
           <div style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '16px 20px', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: selected.narrative ? 10 : 0 }}>
               <span style={{
@@ -115,6 +133,13 @@ export default function IndividualLookupPanel({ allRecords, trainingRecords }) {
             {selected.narrative && (
               <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, fontStyle: 'italic' }}>"{selected.narrative}"</p>
             )}
+          </div>
+        ) : (
+          <div style={{ background: 'var(--card-gradient)', border: '1px dashed var(--border)', borderRadius: 10, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <UserPlus size={14} color="var(--text3)" />
+            <span style={{ fontSize: 12.5, color: 'var(--text3)' }}>
+              No appraisal history yet{selected.rosterSource === 'Hiring' ? ' — recently hired via the pipeline' : ' — recently added'}. Will appear here once their first cycle is recorded.
+            </span>
           </div>
         )}
 
@@ -170,45 +195,62 @@ export default function IndividualLookupPanel({ allRecords, trainingRecords }) {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, role, or site…"
+          placeholder={`Search ${people.length} people by name, role, or site…`}
           style={{
             width: '100%', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8,
             padding: '10px 12px 10px 34px', fontSize: 13, color: 'var(--text)',
           }}
         />
-      </div>
 
-      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 10 }}>
-        {results.length} {results.length === 1 ? 'person' : 'people'} {query.trim() ? 'matching' : 'in the repository'}
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 480, overflowY: 'auto' }}>
-        {results.map((p) => (
-          <button key={identityKey(p)} onClick={() => setSelectedKey(identityKey(p))} style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left',
-            background: 'var(--card-gradient)', border: '1px solid var(--border)', borderRadius: 9,
-            padding: '11px 14px',
+        {query.trim() && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 5,
+            background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 8,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)', maxHeight: 400, overflowY: 'auto',
           }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.employee}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text3)' }}>{p.role} — {p.level} — {p.site}</div>
-            </div>
-            {p.rating && (
-              <span style={{
-                fontSize: 11, fontWeight: 700, color: ratingColor[p.rating], background: `${ratingColor[p.rating]}18`,
-                border: `1px solid ${ratingColor[p.rating]}55`, padding: '3px 9px', borderRadius: 7, flexShrink: 0,
-              }}>
-                {p.rating}/5
-              </span>
+            {results.length === 0 ? (
+              <p style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic', padding: '12px 14px' }}>
+                No one matches "{query}".
+              </p>
+            ) : (
+              results.map((p) => (
+                <button key={identityKey(p)} onClick={() => { setSelectedKey(identityKey(p)); setQuery('') }} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left',
+                  padding: '10px 14px', background: 'none', borderBottom: '1px solid var(--border)',
+                }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.employee}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text3)' }}>{p.role} — {p.level} — {p.site}</div>
+                  </div>
+                  {p.rating ? (
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, color: ratingColor[p.rating], background: `${ratingColor[p.rating]}18`,
+                      border: `1px solid ${ratingColor[p.rating]}55`, padding: '3px 9px', borderRadius: 7, flexShrink: 0,
+                    }}>
+                      {p.rating}/5
+                    </span>
+                  ) : p.noAppraisalYet ? (
+                    <span style={{ fontSize: 9.5, color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>
+                      {p.rosterSource === 'Hiring' ? 'from Hiring' : 'new'}
+                    </span>
+                  ) : null}
+                </button>
+              ))
             )}
-          </button>
-        ))}
-        {results.length === 0 && (
-          <p style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic', padding: '8px 0' }}>
-            No one matches "{query}".
-          </p>
+            {truncatedCount > 0 && (
+              <div style={{ padding: '7px 14px', fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>
+                +{truncatedCount} more — keep typing to narrow it down
+              </div>
+            )}
+          </div>
         )}
       </div>
+
+      {!query.trim() && (
+        <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
+          {people.length} people in the repository — start typing a name, role, or site to find someone.
+        </p>
+      )}
     </div>
   )
 }
