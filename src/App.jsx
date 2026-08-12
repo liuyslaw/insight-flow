@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
-import { FileText, Users, Headset, UserPlus, Activity, LayoutDashboard, UserCog } from 'lucide-react'
+import { FileText, Users, Headset, UserPlus, Activity, LayoutDashboard, UserCog, ShieldCheck, BookOpen } from 'lucide-react'
 import TopBar from './components/TopBar.jsx'
 import OverviewModule from './components/OverviewModule.jsx'
 import DocumentModule from './components/DocumentModule.jsx'
+import ComplyModule from './components/ComplyModule.jsx'
 import TalentManagementModule from './components/TalentManagementModule.jsx'
 import AdminServicesModule from './components/AdminServicesModule.jsx'
 import OnboardingModule from './components/OnboardingModule.jsx'
 import WorkforceInsightsModule from './components/WorkforceInsightsModule.jsx'
 import HiringModule from './components/HiringModule.jsx'
+import UserGuideModule from './components/UserGuideModule.jsx'
 import { getDocuments } from './data/documentStore.js'
+import { getComplySummary, getComplyWorkers } from './data/complyStore.js'
 
-const accentVar = { white: 'var(--white)', gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24', green2: '#16a34a' }
+const accentVar = { white: 'var(--white)', gold: 'var(--gold)', magenta: 'var(--magenta)', blue: 'var(--blue)', green: 'var(--green)', amber: '#fbbf24', green2: '#16a34a', red: 'var(--red)' }
 const accentTint = {
   white: 'rgba(255,255,255,0.1)',
   gold: 'rgba(245,158,11,0.14)',
@@ -19,18 +22,23 @@ const accentTint = {
   green: 'rgba(34,197,94,0.14)',
   amber: 'rgba(251,191,36,0.14)',
   green2: 'rgba(22,163,74,0.14)',
+  red: 'rgba(239,68,68,0.14)',
 }
 
 export default function App() {
   const [active, setActive] = useState('overview')
   const [docCount, setDocCount] = useState(0)
+  const [complyAlertCount, setComplyAlertCount] = useState(0)
 
   useEffect(() => {
     setDocCount(getDocuments().length)
+    const summary = getComplySummary(getComplyWorkers())
+    setComplyAlertCount(summary.overdue + summary.urgent)
   }, [active])
 
   const modules = [
     { id: 'overview', label: 'Overview', Icon: LayoutDashboard, accent: 'white', badge: null },
+    { id: 'comply', label: 'Comply', Icon: ShieldCheck, accent: 'red', badge: complyAlertCount },
     { id: 'document', label: 'Document', Icon: FileText, accent: 'gold', badge: docCount },
     { id: 'talent', label: 'Talent Management', Icon: Users, accent: 'magenta', badge: null },
     { id: 'workforce', label: 'Workforce Insights', Icon: Activity, accent: 'amber', badge: null },
@@ -103,6 +111,31 @@ export default function App() {
             })}
           </div>
 
+          <div style={{ padding: '6px 10px' }}>
+            <div style={{
+              fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase',
+              letterSpacing: 0.8, padding: '4px 6px 6px', fontWeight: 600,
+            }}>
+              Help
+            </div>
+            <button
+              onClick={() => setActive('guide')}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+                padding: '9px 10px 9px 9px', borderRadius: 7, border: 'none',
+                borderLeft: active === 'guide' ? '3px solid var(--text2)' : '3px solid transparent',
+                background: active === 'guide' ? 'rgba(255,255,255,0.05)' : 'none',
+                color: active === 'guide' ? 'var(--text)' : 'var(--text2)',
+                fontSize: 12.5, fontWeight: active === 'guide' ? 600 : 400, textAlign: 'left',
+              }}
+              onMouseEnter={(e) => { if (active !== 'guide') e.currentTarget.style.background = 'var(--card2)' }}
+              onMouseLeave={(e) => { if (active !== 'guide') e.currentTarget.style.background = 'none' }}
+            >
+              <BookOpen size={14} />
+              <span>User Guide</span>
+            </button>
+          </div>
+
           <div style={{ marginTop: 'auto', padding: '14px 14px 16px', borderTop: '1px solid var(--border)' }}>
             <p style={{ fontSize: 10.5, color: 'var(--text3)', lineHeight: 1.6, fontFamily: 'var(--mono)' }}>
               Phase 1 — manual document upload. No connection to any live HR or payroll system.
@@ -113,6 +146,8 @@ export default function App() {
         {/* Main */}
         <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg)' }}>
           {active === 'overview' && <OverviewModule onNavigate={setActive} />}
+          {active === 'guide' && <UserGuideModule />}
+          {active === 'comply' && <ComplyModule />}
           {active === 'document' && <DocumentModule onChange={() => setDocCount(getDocuments().length)} />}
           {active === 'talent' && <TalentManagementModule />}
           {active === 'workforce' && <WorkforceInsightsModule />}
