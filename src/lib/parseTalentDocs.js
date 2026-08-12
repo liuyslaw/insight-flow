@@ -38,6 +38,8 @@ export function parseTalentRecords(text) {
     const businessUnit = block.match(/BUSINESS UNIT:\s*(.+)/)?.[1]?.trim()
     const level = block.match(/ASSIGNED LEVEL:\s*(L?\d+)/i)?.[1]?.trim()
     const rating = block.match(/APPRAISAL RATING:\s*(\d)/)?.[1]
+    const narrativeRaw = block.match(/APPRAISAL NARRATIVE:\s*(.+)$/im)?.[1]?.trim()
+    const narrative = narrativeRaw ? narrativeRaw.replace(/^"|"$/g, '') : null
     const gender = block.match(/GENDER:\s*(\w+)/i)?.[1]?.trim()
     const age = block.match(/AGE:\s*(\d+)/i)?.[1]
     const yearsOfService = block.match(/YEARS OF SERVICE:\s*(\d+)/i)?.[1]
@@ -56,6 +58,7 @@ export function parseTalentRecords(text) {
       businessUnit: businessUnit || null,
       level: level ? (level.startsWith('L') ? level : `L${level}`) : 'Unknown',
       rating: rating ? Number(rating) : null,
+      narrative,
       function: classifyFunction(role || ''),
       gender: gender || null,
       age: age ? Number(age) : null,
