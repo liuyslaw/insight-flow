@@ -34,6 +34,7 @@ export default function OnboardingModule() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [plans, setPlans] = useState([]) // [{ id, role, level, site, checklist, managerBrief, checkedTasks, signOffs, createdAt }]
+  const [employeeSearch, setEmployeeSearch] = useState('')
 
   // Inline sign-off expand state: `${planIdx}-${sectionKey}` while a form is open
   const [signOffOpen, setSignOffOpen] = useState(null)
@@ -86,7 +87,11 @@ export default function OnboardingModule() {
     })
     if (!res.ok) throw new Error(`Request failed (${res.status})`)
     const data = await res.json()
-    return { role: role.role, level: role.level, site: role.site, ...data }
+    return {
+      role: role.role, level: role.level, site: role.site,
+      employee: role.employee || null, employeeId: role.employeeId || null, hireDate: role.hireDate || null,
+      ...data,
+    }
   }
 
   async function generate() {
@@ -163,27 +168,55 @@ export default function OnboardingModule() {
         <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>Onboarding</h2>
       </div>
       <p className="no-print" style={{ fontSize: 12.5, color: 'var(--text3)', lineHeight: 1.6, maxWidth: 580, marginBottom: 20 }}>
-        Select one or more roles to generate onboarding plans for at once — combining role data
-        from Talent Management, policies from Admin Services, and templates from Document, from
-        offer acceptance through the first month.
+        Search for a specific person to build their onboarding plan, or select multiple roles at
+        once — combining role data from Talent Management, policies from Admin Services, and
+        templates from Document, from offer acceptance through the first month.
       </p>
 
       {/* Selection */}
       <div className="no-print" style={{ background: 'var(--card-gradient)', border: '1px solid var(--border)', borderTop: '2px solid var(--green)', boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: 16, marginBottom: 18 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, marginBottom: 10 }}>
-          Who is this for? — select one or more
+          Who is this for? — search by name or select one or more
         </div>
 
+        <input
+          value={employeeSearch}
+          onChange={(e) => setEmployeeSearch(e.target.value)}
+          placeholder="Search by employee name or role…"
+          style={{
+            width: '100%', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8,
+            padding: '9px 12px', fontSize: 12.5, color: 'var(--text)', marginBottom: 10,
+          }}
+        />
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 220, overflowY: 'auto', marginBottom: 10 }}>
-          {talentRecords.map((r, i) => (
-            <button key={i} onClick={() => toggleRecord(i)} style={{
-              display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', background: checkedIdx[i] ? 'rgba(34,197,94,0.08)' : 'none',
-              padding: '6px 8px', borderRadius: 6,
-            }}>
-              {checkedIdx[i] ? <CheckSquare size={14} color="var(--green)" /> : <Square size={14} color="var(--text3)" />}
-              <span style={{ fontSize: 12.5, color: 'var(--text2)' }}>{r.role} — {r.level} — {r.site}</span>
-            </button>
-          ))}
+          {talentRecords
+            .map((r, i) => ({ r, i }))
+            .filter(({ r }) => {
+              if (!employeeSearch.trim()) return true
+              const q = employeeSearch.trim().toLowerCase()
+              return (r.employee || '').toLowerCase().includes(q) || r.role.toLowerCase().includes(q)
+            })
+            .map(({ r, i }) => (
+              <button key={i} onClick={() => toggleRecord(i)} style={{
+                display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', background: checkedIdx[i] ? 'rgba(34,197,94,0.08)' : 'none',
+                padding: '6px 8px', borderRadius: 6,
+              }}>
+                {checkedIdx[i] ? <CheckSquare size={14} color="var(--green)" /> : <Square size={14} color="var(--text3)" />}
+                <span style={{ fontSize: 12.5, color: 'var(--text2)' }}>
+                  {r.employee ? <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{r.employee}</strong> : <em style={{ color: 'var(--text3)' }}>Unnamed / open role</em>}
+                  {' — '}{r.role} — {r.level} — {r.site}
+                </span>
+              </button>
+            ))}
+          {employeeSearch.trim() && talentRecords.every((r) => {
+            const q = employeeSearch.trim().toLowerCase()
+            return !(r.employee || '').toLowerCase().includes(q) && !r.role.toLowerCase().includes(q)
+          }) && (
+            <p style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', padding: '6px 8px' }}>
+              No match for "{employeeSearch}" — add as a custom role below if this is a new hire not yet in Talent Management.
+            </p>
+          )}
           {customEntries.map((c, i) => (
             <div key={`custom-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: 'rgba(34,197,94,0.08)', borderRadius: 6 }}>
               <CheckSquare size={14} color="var(--green)" />
@@ -263,6 +296,39 @@ export default function OnboardingModule() {
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
                 {plan.role} <span style={{ color: 'var(--text3)', fontWeight: 400 }}>— {plan.level} — {plan.site}</span>
               </div>
+
+              {plan.employee && (
+                <div style={{
+                  background: 'var(--card-gradient)', border: '1px solid var(--border)', borderLeft: '3px solid var(--green)',
+                  boxShadow: 'var(--shadow-card)', borderRadius: 10, padding: '14px 18px', marginBottom: 14,
+                  display: 'flex', flexWrap: 'wrap', gap: '6px 28px',
+                }}>
+                  <div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>Employee</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{plan.employee}</div>
+                  </div>
+                  {plan.employeeId && (
+                    <div>
+                      <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>Employee ID</div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)' }}>{plan.employeeId}</div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>Role &amp; Level</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>{plan.role} · {plan.level}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>Site</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>{plan.site}</div>
+                  </div>
+                  {plan.hireDate && (
+                    <div>
+                      <div style={{ fontSize: 9.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>Start / Hire Date</div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)' }}>{plan.hireDate}</div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
                 {sections.map((s) => {
                   const signOff = plan.signOffs?.[s.key]

@@ -9,6 +9,7 @@ import { exportRowsToExcel } from '../lib/exportExcel.js'
 import AppraisalChart from './AppraisalChart.jsx'
 import PeriodRangeSelector from './PeriodRangeSelector.jsx'
 import AIChatPanel from './AIChatPanel.jsx'
+import IndividualLookupPanel from './IndividualLookupPanel.jsx'
 
 const severityColor = { high: 'var(--red)', medium: 'var(--gold)', low: 'var(--text3)' }
 const severityBg = { high: 'rgba(239,68,68,0.06)', medium: 'rgba(245,158,11,0.06)', low: 'rgba(255,255,255,0.03)' }
@@ -29,6 +30,7 @@ const tooltipStyle = {
 const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
 
 export default function TalentManagementModule() {
+  const [viewMode, setViewMode] = useState('overview') // 'overview' | 'individual'
   const [talentDocs, setTalentDocs] = useState([])
   const [trainingDocs, setTrainingDocs] = useState([])
   const [startPeriod, setStartPeriod] = useState({ period: 'FY', year: 2026 })
@@ -252,6 +254,32 @@ export default function TalentManagementModule() {
         </button>
       </div>
 
+      {/* View mode: aggregate workforce analysis vs a single person's record */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button onClick={() => setViewMode('overview')} style={{
+          fontSize: 12.5, fontWeight: 500, padding: '8px 16px', borderRadius: 8,
+          background: viewMode === 'overview' ? 'rgba(184,68,128,0.14)' : 'var(--card2)',
+          border: `1px solid ${viewMode === 'overview' ? 'rgba(184,68,128,0.4)' : 'var(--border)'}`,
+          color: viewMode === 'overview' ? 'var(--magenta)' : 'var(--text3)',
+        }}>
+          Workforce Overview
+        </button>
+        <button onClick={() => setViewMode('individual')} style={{
+          fontSize: 12.5, fontWeight: 500, padding: '8px 16px', borderRadius: 8,
+          background: viewMode === 'individual' ? 'rgba(184,68,128,0.14)' : 'var(--card2)',
+          border: `1px solid ${viewMode === 'individual' ? 'rgba(184,68,128,0.4)' : 'var(--border)'}`,
+          color: viewMode === 'individual' ? 'var(--magenta)' : 'var(--text3)',
+        }}>
+          Individual Lookup
+        </button>
+      </div>
+
+      {viewMode === 'individual' && (
+        <IndividualLookupPanel allRecords={allRecords} trainingRecords={trainingRecords} />
+      )}
+
+      {viewMode === 'overview' && (
+      <>
       {/* Period */}
       <div style={{ marginBottom: 14 }}>
         <PeriodRangeSelector
@@ -598,6 +626,8 @@ export default function TalentManagementModule() {
             </div>
           )}
         </>
+      )}
+      </>
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
