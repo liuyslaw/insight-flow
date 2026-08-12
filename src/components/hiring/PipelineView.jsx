@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Users, Clock } from 'lucide-react'
 import { getPipeline, setStage, STAGES } from '../../data/hiringPipelineStore.js'
+import { addOrUpdateEmployee } from '../../data/employeeStore.js'
 
 const STAGE_ORDER = ['Screened', 'Interview', 'Offer', 'Hired', 'Rejected']
 
@@ -41,6 +42,19 @@ export default function PipelineView() {
 
   function handleStageChange(id, newStage) {
     setStage(id, newStage)
+    if (newStage === 'Hired') {
+      const candidate = candidates.find((c) => c.id === id)
+      if (candidate) {
+        addOrUpdateEmployee({
+          name: candidate.name,
+          role: candidate.role,
+          hireDate: new Date().toISOString().slice(0, 10),
+          source: 'Hiring',
+          sourceCandidateId: candidate.id,
+          status: 'Onboarding',
+        })
+      }
+    }
     refresh()
   }
 
