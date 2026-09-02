@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useEffect, useMemo, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Users, Sparkles, RefreshCw, AlertTriangle, ShieldAlert, Scale, FileDown, Table2, ArrowUp, ArrowDown, Minus, GraduationCap, X } from 'lucide-react'
