@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Policy {
+  id        String   @id @default(cuid())
+  title     String
+  category  String?
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("policies")
+}
+
+model Employee {
+  id            String   @id @default(cuid())
+  name          String
+  jobLevel      String?  @map("job_level")
+  department    String?
+  age           Int?
+  gender        String?
+  tenureMonths  Int?     @map("tenure_months")
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  onboardingPlan OnboardingPlan?
+
+  @@map("employees")
+}
+
+model OnboardingPlan {
+  id           String   @id @default(cuid())
+  employeeId   String   @unique @map("employee_id")
+  planDetails  String   @map("plan_details")
+  status       String   @default("pending")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_plans")
+}
