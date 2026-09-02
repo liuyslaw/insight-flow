@@ -29,8 +29,32 @@ const tooltipStyle = {
   fontSize: 12, color: 'var(--text)', padding: '6px 10px',
 }
 const axisStyle = { fontSize: 11, fill: 'var(--text3)' }
-
 export default function TalentManagementModule() {
+  const [dbEmployees, setDbEmployees] = useState(null);
+
+  useEffect(() => {
+    async function fetchFromDatabase() {
+      try {
+        const response = await fetch('/api/employees');
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setDbEmployees(data);
+        } else {
+          setDbEmployees([]);
+        }
+      } catch (error) {
+        console.warn('Database fetch failed, using fallback data');
+        setDbEmployees([]);
+      }
+    }
+    fetchFromDatabase();
+  }, []);
+  
+   // SAFETY NET: Use DB data or fallback to mock data
+   const displayEmployees = (dbEmployees && dbEmployees.length > 0) 
+     ? dbEmployees 
+     : talentDocs;  // Using talentDocs as fallback
+   
   const [viewMode, setViewMode] = useState('overview') // 'overview' | 'individual'
   const [talentDocs, setTalentDocs] = useState([])
   const [trainingDocs, setTrainingDocs] = useState([])
@@ -598,7 +622,7 @@ export default function TalentManagementModule() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
             {(result.flags || []).map((flag, i) => {
               const Icon = flagIcon[flag.type] || AlertTriangle
-              return (
+               return (
                 <div key={i} style={{
                   background: severityBg[flag.severity] || severityBg.low,
                   border: `1px solid ${severityBorder[flag.severity] || severityBorder.low}`,
