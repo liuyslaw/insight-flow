@@ -130,7 +130,13 @@ export default function OnboardingModule() {
         policies: policyDocs.map((p) => ({ title: p.title, body: p.body })),
       }),
     })
-    if (!res.ok) throw new Error(`Request failed (${res.status})`)
+    if (!res.ok) {
+
+      const body = await res.json().catch(() => null)
+
+      throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+    }
     const data = await res.json()
     return {
       role: role.role, level: role.level, site: role.site,

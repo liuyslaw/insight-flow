@@ -279,7 +279,13 @@ export default function WorkforceInsightsModule() {
           attritionRate: attrition?.rate?.toFixed(1), leaverCount: attrition?.leaverCount,
         }),
       })
-      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      if (!res.ok) {
+
+        const body = await res.json().catch(() => null)
+
+        throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+      }
       const data = await res.json()
       setSummary(data.narrative)
     } catch (err) {

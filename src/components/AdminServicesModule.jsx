@@ -49,7 +49,13 @@ export default function AdminServicesModule() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: text, context }),
       })
-      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      if (!res.ok) {
+
+        const body = await res.json().catch(() => null)
+
+        throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+      }
       const data = await res.json()
       setMessages((m) => [...m, {
         role: 'assistant', content: data.answer,
