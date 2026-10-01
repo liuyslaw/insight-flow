@@ -3,7 +3,7 @@ import { UserPlus, Sparkles, RefreshCw, AlertTriangle, CheckSquare, Square, File
 import { getDocumentsByType } from '../data/documentStore.js'
 import { parseTalentRecords } from '../lib/parseTalentDocs.js'
 import { buildOnboardingReportDocx } from '../lib/buildOnboardingReport.js'
-import { getOnboardingPlans, savePlans, togglePlanTask, signOffSection, clearSignOff } from '../data/onboardingStore.js'
+import { getOnboardingPlans, savePlans, togglePlanTask, signOffSection, clearSignOff, deletePlan, clearAllPlans } from '../data/onboardingStore.js'
 import { getEmployees, addOrUpdateEmployee } from '../data/employeeStore.js'
 
 const sections = [
@@ -212,6 +212,22 @@ export default function OnboardingModule() {
     setPlans(updatedPlans)
   }
 
+  const [confirmClearAll, setConfirmClearAll] = useState(false)
+
+  function removePlan(planIdx) {
+    const plan = plans[planIdx]
+    if (!plan?.id) return
+    const updatedPlans = deletePlan(plan.id)
+    setPlans(updatedPlans)
+  }
+
+  function handleClearAll() {
+    if (!confirmClearAll) { setConfirmClearAll(true); return }
+    const updatedPlans = clearAllPlans()
+    setPlans(updatedPlans)
+    setConfirmClearAll(false)
+  }
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 940 }}>
       <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -383,12 +399,37 @@ export default function OnboardingModule() {
             }}>
               <Printer size={13} /> Print / Export as PDF
             </button>
+            {confirmClearAll && (
+              <button onClick={() => setConfirmClearAll(false)} style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                background: 'none', border: '1px solid var(--border)', borderRadius: 8,
+                padding: '8px 16px', color: 'var(--text3)', fontSize: 12,
+              }}>
+                Cancel
+              </button>
+            )}
+            <button onClick={handleClearAll} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: confirmClearAll ? 'rgba(239,68,68,0.15)' : 'var(--card2)',
+              border: `1px solid ${confirmClearAll ? 'var(--red)' : 'var(--border)'}`, borderRadius: 8,
+              padding: '8px 16px', color: confirmClearAll ? 'var(--red)' : 'var(--text)', fontSize: 12,
+            }}>
+              <X size={13} /> {confirmClearAll ? 'Click again to confirm' : 'Clear all plans'}
+            </button>
           </div>
 
           {plans.map((plan, pi) => (
             <div key={plan.id || pi} style={{ marginBottom: 28, pageBreakInside: 'avoid' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-                {plan.role} <span style={{ color: 'var(--text3)', fontWeight: 400 }}>— {plan.level} — {plan.site}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+                  {plan.role} <span style={{ color: 'var(--text3)', fontWeight: 400 }}>— {plan.level} — {plan.site}</span>
+                </div>
+                <button onClick={() => removePlan(pi)} title="Remove this plan" className="no-print" style={{
+                  display: 'flex', alignItems: 'center', gap: 4, background: 'none',
+                  color: 'var(--text3)', fontSize: 11, padding: '4px 8px', borderRadius: 6,
+                }}>
+                  <X size={12} /> Remove
+                </button>
               </div>
 
               {plan.employee && (
