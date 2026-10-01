@@ -64,3 +64,12 @@ export function clearSignOff(planId, sectionKey) {
   })
   return persist(plans)
 }
+
+export function deletePlan(planId) {
+  const plans = getOnboardingPlans().filter((p) => p.id !== planId)
+  return persist(plans)
+}
+
+export function clearAllPlans() {
+  return persist([])
+}
