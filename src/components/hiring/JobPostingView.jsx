@@ -42,7 +42,13 @@ export default function JobPostingView() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: 'job-posting', input }),
       })
-      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      if (!res.ok) {
+
+        const body = await res.json().catch(() => null)
+
+        throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+      }
       setResult(await res.json())
     } catch (err) {
       setError(err.message || 'Something went wrong. Try again.')

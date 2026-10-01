@@ -26,7 +26,13 @@ export default function OfferLetterView() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task: 'offer-letter', input }),
       })
-      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      if (!res.ok) {
+
+        const body = await res.json().catch(() => null)
+
+        throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+      }
       const data = await res.json()
       setResult(data)
       try {

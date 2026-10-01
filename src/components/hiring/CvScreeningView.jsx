@@ -57,7 +57,13 @@ export default function CvScreeningView() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ task: 'cv-screen', input: `TARGET JOB DESCRIPTION:\n${jdText}\n\nCANDIDATE CV:\n${cv.text}` }),
     })
-    if (!res.ok) throw new Error(`Request failed (${res.status})`)
+    if (!res.ok) {
+
+      const body = await res.json().catch(() => null)
+
+      throw new Error(body?.error ? `${body.error} (${res.status})` : `Request failed (${res.status})`)
+
+    }
     const data = await res.json()
     try {
       const role = deriveRoleName(roleSelection, existingRoles, jdText)
