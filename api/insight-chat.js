@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         max_tokens: 500,
         temperature: 0.3,
         messages,
@@ -72,7 +72,12 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errText = await response.text()
       console.error('Groq API error:', errText)
-      return res.status(502).json({ error: 'Chat engine error' })
+      let reason = 'Groq API returned an error';
+      try {
+        const parsed = JSON.parse(errText);
+        if (parsed?.error?.message) reason = parsed.error.message;
+      } catch { /* errText wasn't JSON — keep the generic reason above */ }
+      return res.status(502).json({ error: reason });
     }
 
     const data = await response.json()
