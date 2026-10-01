@@ -64,7 +64,8 @@ ${(tenureData || []).map((d) => `${d.name}: ${d.value}`).join('\n')}`;
       },
       body: JSON.stringify({
         model: 'openai/gpt-oss-120b',
-        max_tokens: 600,
+        max_tokens: 1000,
+        reasoning_effort: 'low', // openai/gpt-oss-120b: bounded task, don't spend budget on deep reasoning
         temperature: 0.3,
         response_format: { type: 'json_object' },
         messages: [

@@ -72,7 +72,8 @@ export default async function handler(req, res) {
                 },
                 body: JSON.stringify({
                           model: 'openai/gpt-oss-120b',
-                          max_tokens: 500,
+                          max_tokens: 800,
+        reasoning_effort: 'low', // openai/gpt-oss-120b: bounded task, don't spend budget on deep reasoning
                           temperature: 0.3,
                           messages: [
                             { role: 'system', content: SYSTEM_PROMPT },
